@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"\")",
+      "Bash(mkdir \"c:\\\\Users\\\\guill\\\\Desktop\\\\maintly\\\\app\\\\app\\\\locations\\\\[id]\")",
+      "Bash(npm run *)",
+      "Bash(Get-Content \"C:\\\\Users\\\\guill\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-guill-Desktop-maintly\\\\cf706673-d2b6-4096-a053-7d6ae3fb4945\\\\tasks\\\\b720maryz.output\" -Wait -Tail 30)",
+      "Bash(Get-Content \"C:\\\\Users\\\\guill\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-guill-Desktop-maintly\\\\cf706673-d2b6-4096-a053-7d6ae3fb4945\\\\tasks\\\\b2075g995.output\" -Tail 15 -Wait)",
+      "Bash(Get-Content \"C:\\\\Users\\\\guill\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-guill-Desktop-maintly\\\\cf706673-d2b6-4096-a053-7d6ae3fb4945\\\\tasks\\\\bpmngvl3o.output\" -Tail 10)"
+    ]
+  }
+}
