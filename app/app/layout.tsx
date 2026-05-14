@@ -7,6 +7,7 @@ import { Topbar } from "@/components/layout/Topbar";
 import { SidebarProvider } from "@/components/layout/SidebarContext";
 import { CustomizationPanel } from "@/components/theme/CustomizationPanel";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { PageTransitionWrapper } from "@/components/layout/PageTransitionWrapper";
 
 export default async function AppLayout({
   children,
@@ -101,7 +102,9 @@ export default async function AppLayout({
           */}
           <main className="flex-1 px-4 md:px-6 py-6
                            pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-6">
-            {children}
+            <PageTransitionWrapper>
+              {children}
+            </PageTransitionWrapper>
           </main>
         </div>
       </div>

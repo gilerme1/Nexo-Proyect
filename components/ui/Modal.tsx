@@ -46,7 +46,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-backdrop-enter"
         onClick={onClose}
       />
 
@@ -55,7 +55,7 @@ export function Modal({
         className={cn(
           "relative w-full bg-[var(--bg-card-elevated)] rounded-[var(--radius-card)]",
           "border border-[var(--border-default)] shadow-[var(--shadow-elevated)]",
-          "max-h-[90vh] flex flex-col",
+          "max-h-[90vh] flex flex-col animate-modal-enter",
           sizes[size],
           className,
         )}

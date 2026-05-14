@@ -41,8 +41,7 @@ export function Tooltip({
             "bg-[var(--bg-card-elevated)] text-[var(--text-primary)]",
             "border border-[var(--border-default)]",
             "shadow-[var(--shadow-elevated)]",
-            "data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=delayed-open]:fade-in-0 data-[state=closed]:fade-out-0",
+            "opacity-0 data-[state=delayed-open]:opacity-100 transition-opacity duration-150 ease-out",
             "max-w-xs",
             className,
           )}

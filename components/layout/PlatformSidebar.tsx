@@ -50,9 +50,9 @@ export function PlatformSidebar({ tenants }: Props) {
     <SidebarShell>
       <WorkspaceSwitcher current={{ kind: "platform" }} tenants={tenants} isPlatformAdmin />
 
-      <nav className="flex-1 overflow-y-auto mt-4 -mx-1 px-1">
+      <nav className="mt-3">
         <SidebarSection title="Operación" />
-        <ul className="space-y-0.5 mb-5">
+        <ul className="space-y-px mb-2">
           {nav.map((item) => (
             <li key={item.href}>
               <SidebarItem
@@ -66,7 +66,7 @@ export function PlatformSidebar({ tenants }: Props) {
         </ul>
 
         <SidebarSection title="Cuenta" />
-        <ul className="space-y-0.5">
+        <ul className="space-y-px">
           {secondary.map((item) => (
             <li key={item.href}>
               <SidebarItem

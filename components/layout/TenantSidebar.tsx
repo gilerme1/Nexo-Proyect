@@ -75,9 +75,9 @@ export function TenantSidebar({ tenants, currentTenant, role, overdueCount = 0 }
         isPlatformAdmin={role === "platform_admin"}
       />
 
-      <nav className="flex-1 overflow-y-auto mt-4 -mx-1 px-1">
+      <nav className="mt-3">
         <SidebarSection title="Operación" />
-        <ul className="space-y-0.5 mb-5">
+        <ul className="space-y-px mb-2">
           {visibleNav.map((item) => (
             <li key={item.href}>
               <SidebarItem
@@ -94,7 +94,7 @@ export function TenantSidebar({ tenants, currentTenant, role, overdueCount = 0 }
         {visibleSecondary.length > 0 && (
           <>
             <SidebarSection title="Cuenta" />
-            <ul className="space-y-0.5">
+            <ul className="space-y-px">
               {visibleSecondary.map((item) => (
                 <li key={item.href}>
                   <SidebarItem

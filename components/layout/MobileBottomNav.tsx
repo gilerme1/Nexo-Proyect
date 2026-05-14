@@ -52,9 +52,25 @@ export function MobileBottomNav({ user: _user }: MobileBottomNavProps) {
           {LEFT_TABS.map(({ id, label, icon: Icon, href }) => {
             const active = activeTab === id;
             return (
-              <Link key={id} href={href} className="group flex flex-1 flex-col items-center gap-1 active:opacity-60 transition-opacity duration-100">
-                <Icon className={cn("h-5 w-5 group-hover:scale-110 transition-transform duration-150", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")} />
-                <span className={cn("text-[10px] font-medium", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")}>
+              <Link
+                key={id}
+                href={href}
+                className="group flex flex-1 flex-col items-center gap-0.5 pt-1 active:scale-90 transition-transform duration-150"
+              >
+                <span className="relative flex items-center justify-center h-8 w-8">
+                  {active && (
+                    <span className="absolute inset-0 rounded-full bg-[var(--accent-500)]/15 animate-bounce-in" />
+                  )}
+                  <Icon
+                    className={cn(
+                      "h-5 w-5 relative transition-[transform,color] duration-200",
+                      active
+                        ? "text-[var(--accent-500)] scale-110"
+                        : "text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] group-hover:scale-110 group-hover:-translate-y-0.5",
+                    )}
+                  />
+                </span>
+                <span className={cn("text-[10px] font-medium transition-colors duration-200", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")}>
                   {label}
                 </span>
               </Link>
@@ -67,18 +83,37 @@ export function MobileBottomNav({ user: _user }: MobileBottomNavProps) {
               type="button"
               onClick={() => setScanOpen(true)}
               aria-label="Escanear QR"
-              className="group h-14 w-14 -mt-7 grid place-items-center rounded-full bg-[var(--accent-500)] text-white shadow-lg cursor-pointer hover:brightness-110 active:scale-90 transition-all duration-150"
+              className="group h-14 w-14 -mt-7 grid place-items-center rounded-full bg-[var(--accent-500)] text-white cursor-pointer
+                         shadow-[0_4px_20px_rgba(59,108,255,0.5)]
+                         hover:shadow-[0_6px_28px_rgba(59,108,255,0.65)] hover:brightness-110
+                         active:scale-90 transition-all duration-200"
             >
-              <ScanLine className="h-6 w-6 group-hover:scale-110 transition-transform duration-150" />
+              <ScanLine className="h-6 w-6 transition-transform duration-200 group-hover:scale-110 group-hover:-translate-y-0.5" />
             </button>
           </div>
 
           {RIGHT_TABS.map(({ id, label, icon: Icon, href }) => {
             const active = activeTab === id;
             return (
-              <Link key={id} href={href} className="group flex flex-1 flex-col items-center gap-1 active:opacity-60 transition-opacity duration-100">
-                <Icon className={cn("h-5 w-5 group-hover:scale-110 transition-transform duration-150", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")} />
-                <span className={cn("text-[10px] font-medium", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")}>
+              <Link
+                key={id}
+                href={href}
+                className="group flex flex-1 flex-col items-center gap-0.5 pt-1 active:scale-90 transition-transform duration-150"
+              >
+                <span className="relative flex items-center justify-center h-8 w-8">
+                  {active && (
+                    <span className="absolute inset-0 rounded-full bg-[var(--accent-500)]/15 animate-bounce-in" />
+                  )}
+                  <Icon
+                    className={cn(
+                      "h-5 w-5 relative transition-[transform,color] duration-200",
+                      active
+                        ? "text-[var(--accent-500)] scale-110"
+                        : "text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] group-hover:scale-110 group-hover:-translate-y-0.5",
+                    )}
+                  />
+                </span>
+                <span className={cn("text-[10px] font-medium transition-colors duration-200", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")}>
                   {label}
                 </span>
               </Link>

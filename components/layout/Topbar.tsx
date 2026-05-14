@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Bell, ScanLine, Wrench, Building2, MapPin, LogOut } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import { HamburgerButton } from "./HamburgerButton";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -69,10 +68,8 @@ export function Topbar({ scope, scopeLabel, user, searchIndex = [], tenantLogoUr
   return (
     <>
       <header className="h-16 sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between gap-3 bg-[var(--bg-page)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]">
-        {/* Left: hamburger (desktop animated, mobile drawer opener) + brand */}
+        {/* Left: brand */}
         <div className="flex items-center gap-2 min-w-0">
-          <HamburgerButton />
-
           <div className="flex items-center gap-2 min-w-0">
             {tenantLogoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element

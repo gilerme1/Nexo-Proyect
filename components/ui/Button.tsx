@@ -17,15 +17,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-[var(--accent-500)] text-white hover:bg-[var(--accent-600)] active:bg-[var(--accent-700)] shadow-sm",
+    "bg-[var(--accent-500)] text-white hover:bg-[var(--accent-600)] active:bg-[var(--accent-700)] active:scale-[0.97] shadow-sm hover:shadow-[0_4px_16px_rgba(59,108,255,0.35)]",
   secondary:
-    "bg-[var(--bg-card-elevated)] text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)]",
+    "bg-[var(--bg-card-elevated)] text-[var(--text-primary)] border border-[var(--border-default)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] active:scale-[0.97]",
   ghost:
-    "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]",
+    "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] active:scale-[0.97]",
   danger:
-    "bg-[var(--danger-fg)] text-white hover:opacity-90 shadow-sm",
+    "bg-[var(--danger-fg)] text-white hover:opacity-90 active:scale-[0.97] shadow-sm",
   outline:
-    "bg-transparent text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]",
+    "bg-transparent text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)] active:scale-[0.97]",
 };
 
 const sizes: Record<Size, string> = {
@@ -56,6 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         className={cn(
           "group inline-flex items-center justify-center font-medium",
+          "transition-all duration-150",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           pill ? "rounded-full" : "rounded-lg",
           variants[variant],
