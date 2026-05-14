@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { SignaturePad } from "./SignaturePad";
+import { compressReportImage } from "./imageCompression";
 import { createReport } from "@/lib/actions/reports";
 import { buildInitialChecklists } from "@/lib/reports/checklists";
 import { cn } from "@/lib/utils/cn";
@@ -140,8 +141,10 @@ export function NewReportForm({ equipment, clients, locations, equipmentTypes, s
 
       setPhotos((prev) => [...prev, { url: "", caption: "", uploading: true }]);
 
+      const compressed = await compressReportImage(file);
+
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", compressed);
       fd.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
 
       try {

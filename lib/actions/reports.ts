@@ -209,6 +209,41 @@ export async function createScheduledMaintenance(
 }
 
 // ============================================================================
+// UPDATE REPORT
+// ============================================================================
+
+export async function updateReport(formData: FormData): Promise<{ ok: boolean; error?: string }> {
+  const session = await getSession();
+  if (session.workspace.kind !== "tenant") return { ok: false, error: "Sesión inválida." };
+  const tenantId = session.workspace.tenantId;
+
+  const id = String(formData.get("id") ?? "");
+  const report = store.reports.find((r) => r.id === id && r.tenantId === tenantId);
+  if (!report) return { ok: false, error: "Reporte no encontrado." };
+
+  const status = String(formData.get("status") ?? "").trim();
+  if (status) report.status = status as import("@/lib/types").ReportStatus;
+
+  const reportKind = String(formData.get("reportKind") ?? "").trim();
+  if (reportKind) report.reportKind = reportKind as import("@/lib/types").ReportKind;
+
+  const date = String(formData.get("date") ?? "").trim();
+  if (date) report.date = new Date(date).toISOString();
+
+  const durRaw = parseInt(String(formData.get("durationMinutes") ?? ""), 10);
+  if (!isNaN(durRaw) && durRaw > 0) report.durationMinutes = durRaw;
+  else if (String(formData.get("durationMinutes") ?? "").trim() === "") report.durationMinutes = undefined;
+
+  const observations = String(formData.get("observations") ?? "").trim();
+  report.observations = observations || undefined;
+
+  revalidatePath(`/app/reports/${id}`);
+  revalidatePath("/app/reports");
+  revalidatePath("/app");
+  return { ok: true };
+}
+
+// ============================================================================
 // COMPLETE SCHEDULED MAINTENANCE (quick action from list)
 // ============================================================================
 

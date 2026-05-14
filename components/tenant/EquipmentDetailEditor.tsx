@@ -125,9 +125,7 @@ export function EquipmentDetailEditor({
     else setAssignError(res.error ?? "Error asignando QR.");
   }
 
-  const qrValue = typeof window !== "undefined"
-    ? `${window.location.origin}/q/${qrCode}`
-    : `/q/${qrCode}`;
+  const qrValue = `https://maintly.app/q/${qrCode ?? ""}`;
 
   return (
     <div className="space-y-6 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">

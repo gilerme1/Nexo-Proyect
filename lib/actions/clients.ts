@@ -163,19 +163,32 @@ export async function createLocation(formData: FormData): Promise<{ ok: boolean;
   return { ok: true, locationId: location.id };
 }
 
-export async function updateLocation(formData: FormData) {
+export async function updateLocation(formData: FormData): Promise<{ ok: boolean; error?: string }> {
   const id = String(formData.get("id") ?? "");
   const loc = store.locations.find((l) => l.id === id);
-  if (!loc) return;
+  if (!loc) return { ok: false, error: "Ubicación no encontrada." };
 
   const name = String(formData.get("name") ?? "").trim();
-  if (name) loc.name = name;
-  loc.address = String(formData.get("address") ?? "").trim() || undefined;
-  loc.city = String(formData.get("city") ?? "").trim() || undefined;
-  loc.notes = String(formData.get("notes") ?? "").trim() || undefined;
+  if (!name) return { ok: false, error: "El nombre es obligatorio." };
 
+  loc.name    = name;
+  loc.address = String(formData.get("address") ?? "").trim() || undefined;
+  loc.city    = String(formData.get("city")    ?? "").trim() || undefined;
+  loc.country = String(formData.get("country") ?? "").trim() || undefined;
+  loc.notes   = String(formData.get("notes")   ?? "").trim() || undefined;
+
+  const rawStatus = String(formData.get("status") ?? "").trim();
+  if (rawStatus) loc.status = rawStatus as import("@/lib/types").LocationStatus;
+
+  const latRaw = parseFloat(String(formData.get("latitude")  ?? ""));
+  const lngRaw = parseFloat(String(formData.get("longitude") ?? ""));
+  if (!isNaN(latRaw)) loc.latitude  = latRaw;
+  if (!isNaN(lngRaw)) loc.longitude = lngRaw;
+
+  revalidatePath(`/app/locations/${id}`);
   revalidatePath(`/app/clients/${loc.clientId}`);
   revalidatePath("/app/locations");
+  return { ok: true };
 }
 
 export async function deleteLocation(formData: FormData) {

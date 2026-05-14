@@ -85,8 +85,9 @@ export default async function LocationsPage() {
                     {locs.map((loc) => {
                       const eqCount = equipmentCountByLocation.get(loc.id) ?? 0;
                       return (
-                        <li
-                          key={loc.id}
+                        <li key={loc.id}>
+                        <Link
+                          href={`/app/locations/${loc.id}`}
                           className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--bg-hover)]"
                         >
                           <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--bg-hover)] text-[var(--text-secondary)]">
@@ -105,6 +106,7 @@ export default async function LocationsPage() {
                             <Wrench className="h-3 w-3" />
                             {eqCount}
                           </span>
+                        </Link>
                         </li>
                       );
                     })}
