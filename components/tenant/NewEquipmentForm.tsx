@@ -9,6 +9,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { createEquipment } from "@/lib/actions/equipment";
 import {
   HARDCODED_EQUIPMENT_TEMPLATES,
@@ -88,7 +89,7 @@ export function NewEquipmentForm({
         description="Datos básicos primero, después los detalles según el tipo."
       />
 
-      <form action={handleSubmit} className="space-y-6 max-w-2xl">
+      <form action={handleSubmit} className="space-y-6">
         <Card>
           <CardBody className="space-y-4">
             <div>
@@ -263,17 +264,33 @@ export function TemplateFieldInput({ field }: { field: EquipmentField }) {
     );
   }
 
+  if (field.type === "date") {
+    return <DateFieldInput name={name} label={label} hint={field.hint} />;
+  }
+
   return (
     <div>
       {label}
       <Input
         name={name}
-        type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+        type={field.type === "number" ? "number" : "text"}
         placeholder={field.placeholder}
       />
       {field.hint && (
         <p className="mt-1 text-2xs text-[var(--text-tertiary)]">{field.hint}</p>
       )}
+    </div>
+  );
+}
+
+function DateFieldInput({ name, label, hint }: { name: string; label: React.JSX.Element; hint?: string }) {
+  const [value, setValue] = useState("");
+  return (
+    <div>
+      {label}
+      <DatePicker value={value} onChange={setValue} placeholder="Seleccionar fecha" />
+      <input type="hidden" name={name} value={value} />
+      {hint && <p className="mt-1 text-2xs text-[var(--text-tertiary)]">{hint}</p>}
     </div>
   );
 }

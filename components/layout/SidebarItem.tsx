@@ -23,7 +23,7 @@ export function SidebarItem({ href, icon: Icon, label, active, badge }: SidebarI
       href={href}
       onClick={() => !isDesktop && closeMobile()}
       className={cn(
-        "flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm",
+        "group flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-sm",
         isIconOnly && "justify-center px-2",
         active
           ? "bg-[var(--bg-card)] text-[var(--text-primary)] font-medium border border-[var(--border-subtle)]"
@@ -31,7 +31,7 @@ export function SidebarItem({ href, icon: Icon, label, active, badge }: SidebarI
       )}
       aria-label={label}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-4 w-4 shrink-0 group-hover:scale-110 transition-transform duration-150" />
       {!isIconOnly && <span className="truncate flex-1">{label}</span>}
       {!isIconOnly && badge != null && badge > 0 && (
         <span className="ml-auto min-w-[18px] rounded-full bg-[var(--danger-bg)] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[var(--danger-fg)]">

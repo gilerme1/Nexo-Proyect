@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { store, newId } from "@/lib/data/store";
 import { getSession } from "@/lib/auth/get-session";
@@ -12,9 +13,7 @@ const CHARSET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function randomCode(prefix: string, length = 8): string {
   let code = "";
-  const arr = new Uint8Array(length);
-  // crypto.getRandomValues works in Node 20
-  crypto.getRandomValues(arr);
+  const arr = randomBytes(length);
   for (const byte of arr) {
     code += CHARSET[byte % CHARSET.length];
   }
@@ -139,6 +138,63 @@ export async function bindQrTag(tagCode: string, equipmentId: string): Promise<{
   revalidatePath("/app/qr-tags");
   revalidatePath(`/app/equipment/${equipmentId}`);
   return { ok: true };
+}
+
+// ============================================================================
+// GENERATE AND BIND QR TO AN EQUIPMENT (one-shot)
+// ============================================================================
+
+export async function generateAndBindQr(
+  equipmentId: string,
+): Promise<{ ok: boolean; error?: string; code?: string }> {
+  const session = await getSession();
+  if (session.workspace.kind !== "tenant") {
+    return { ok: false, error: "Sesión inválida." };
+  }
+  const tenantId = session.workspace.tenantId;
+
+  const eq = store.equipment.find((e) => e.id === equipmentId);
+  if (!eq) return { ok: false, error: "Equipo no encontrado." };
+  if (eq.qrCode) return { ok: false, error: "Este equipo ya tiene un QR asignado." };
+
+  const now = new Date().toISOString();
+  const code = ensureUnique("MTL");
+
+  const batchId = newId("batch");
+  const batch: QrBatch = {
+    id: batchId,
+    scope: "tenant",
+    tenantId,
+    name: `Auto QR – ${eq.name}`,
+    size: 1,
+    format: "avery_5160",
+    prefix: "MTL",
+    status: "printed",
+    createdBy: session.userId,
+    createdAt: now,
+  };
+
+  const tag: QrTag = {
+    id: newId("qtag"),
+    tenantId,
+    batchId,
+    code,
+    url: `https://maintly.app/q/${code}`,
+    status: "bound",
+    equipmentId,
+    boundAt: now,
+    claimedAt: now,
+    claimedBy: session.userId,
+    createdAt: now,
+  };
+
+  store.qrBatches.push(batch);
+  store.qrTags.push(tag);
+  eq.qrCode = code;
+
+  revalidatePath("/app/qr-tags");
+  revalidatePath(`/app/equipment/${equipmentId}`);
+  return { ok: true, code };
 }
 
 // ============================================================================

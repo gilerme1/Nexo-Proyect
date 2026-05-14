@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { themeScript } from "@/components/theme/themeScript";
 import { TooltipRoot } from "@/components/ui/Tooltip";
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
-import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
+import { LazyPwaInstallPrompt } from "@/components/pwa/LazyPwaInstallPrompt";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
@@ -69,7 +69,7 @@ export default function RootLayout({
           <TooltipRoot>{children}</TooltipRoot>
         </ThemeProvider>
         <ServiceWorkerRegister />
-        <PwaInstallPrompt />
+        <LazyPwaInstallPrompt />
       </body>
     </html>
   );

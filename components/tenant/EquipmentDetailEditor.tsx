@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { EquipmentStatusBadge } from "@/components/ui/EquipmentStatusBadge";
 import { updateEquipment } from "@/lib/actions/equipment";
+import { generateAndBindQr, bindQrTag } from "@/lib/actions/qr";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { HARDCODED_EQUIPMENT_TEMPLATES } from "@/lib/equipment/templates";
 import { getEquipmentFormFields } from "@/lib/equipment/resolver";
 import type {
@@ -75,6 +77,12 @@ export function EquipmentDetailEditor({
   const [clientId, setClientId] = useState(equipment.clientId);
   const [typeId, setTypeId] = useState(equipment.equipmentTypeId);
   const [qrOpen, setQrOpen] = useState(false);
+  const [qrCode, setQrCode] = useState(equipment.qrCode);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const [assignInput, setAssignInput] = useState("");
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const filteredLocations = locations.filter((l) => l.clientId === clientId);
   const selectedType = equipmentTypes.find((t) => t.id === typeId);
@@ -97,9 +105,29 @@ export function EquipmentDetailEditor({
     });
   }
 
+  async function handleGenerateQr() {
+    setIsGenerating(true);
+    setQrError(null);
+    const res = await generateAndBindQr(equipment.id);
+    setIsGenerating(false);
+    if (res.ok && res.code) setQrCode(res.code);
+    else setQrError(res.error ?? "Error generando QR.");
+  }
+
+  async function handleAssignQr() {
+    const code = assignInput.trim().toUpperCase();
+    if (!code) return;
+    setIsAssigning(true);
+    setAssignError(null);
+    const res = await bindQrTag(code, equipment.id);
+    setIsAssigning(false);
+    if (res.ok) { setQrCode(code); setAssignInput(""); }
+    else setAssignError(res.error ?? "Error asignando QR.");
+  }
+
   const qrValue = typeof window !== "undefined"
-    ? `${window.location.origin}/q/${equipment.qrCode}`
-    : `/q/${equipment.qrCode}`;
+    ? `${window.location.origin}/q/${qrCode}`
+    : `/q/${qrCode}`;
 
   return (
     <div className="space-y-6 pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
@@ -169,7 +197,7 @@ export function EquipmentDetailEditor({
         </div>
       )}
 
-      <form action={handleSubmit} className="space-y-6 max-w-2xl">
+      <form action={handleSubmit} className="space-y-6">
         {/* Basic info */}
         <Card>
           <CardBody className="space-y-4">
@@ -282,8 +310,7 @@ export function EquipmentDetailEditor({
       </form>
 
       {/* D4a — Reports history */}
-      <div className="max-w-2xl">
-        <Card>
+      <Card>
           <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-subtle)]">
             <div>
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Historial de reportes</h3>
@@ -328,7 +355,81 @@ export function EquipmentDetailEditor({
             )}
           </CardBody>
         </Card>
-      </div>
+
+      {/* QR card */}
+      <Card>
+        <div className="px-6 py-5 border-b border-[var(--border-subtle)]">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Código QR</h3>
+          <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
+            {qrCode ? "QR vinculado a este equipo." : "Este equipo aún no tiene un QR asignado."}
+          </p>
+        </div>
+        <CardBody className="space-y-4">
+          {qrCode ? (
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="flex justify-center p-4 bg-white rounded-xl shrink-0">
+                <QRCodeSVG value={qrValue} size={140} />
+              </div>
+              <div className="min-w-0 space-y-1">
+                <p className="font-mono text-sm text-[var(--text-primary)] font-semibold">{qrCode}</p>
+                <p className="text-2xs text-[var(--text-tertiary)]">{qrValue}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Generate new QR */}
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--bg-hover)]">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-[var(--text-primary)]">Generar QR nuevo</p>
+                  <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
+                    Crea y vincula automáticamente un código QR a este equipo.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  pill
+                  loading={isGenerating}
+                  onClick={handleGenerateQr}
+                  type="button"
+                >
+                  Generar
+                </Button>
+              </div>
+              {qrError && (
+                <p className="text-2xs text-[var(--danger-fg)]">{qrError}</p>
+              )}
+
+              {/* Assign existing QR */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-[var(--text-secondary)]">
+                  O asignar un código QR existente
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    value={assignInput}
+                    onChange={(e) => setAssignInput(e.target.value)}
+                    placeholder="MTL-XXXX-XXXX"
+                    className="flex-1 font-mono"
+                  />
+                  <Button
+                    size="sm"
+                    pill
+                    variant="secondary"
+                    loading={isAssigning}
+                    onClick={handleAssignQr}
+                    type="button"
+                  >
+                    Asignar
+                  </Button>
+                </div>
+                {assignError && (
+                  <p className="text-2xs text-[var(--danger-fg)]">{assignError}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </CardBody>
+      </Card>
 
       {/* M4 — Mobile sticky footer */}
       <div className="lg:hidden fixed bottom-16 inset-x-0 z-40 px-4 pb-2 flex gap-2">
@@ -341,14 +442,26 @@ export function EquipmentDetailEditor({
             Generar reporte
           </button>
         </Link>
-        <button
-          type="button"
-          onClick={() => setQrOpen(true)}
-          className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm font-medium shadow-lg"
-        >
-          <QrCode className="h-4 w-4" />
-          Ver QR
-        </button>
+        {qrCode ? (
+          <button
+            type="button"
+            onClick={() => setQrOpen(true)}
+            className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm font-medium shadow-lg"
+          >
+            <QrCode className="h-4 w-4" />
+            Ver QR
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={handleGenerateQr}
+            disabled={isGenerating}
+            className="flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-sm font-medium shadow-lg disabled:opacity-60"
+          >
+            <QrCode className="h-4 w-4" />
+            {isGenerating ? "Generando…" : "Generar QR"}
+          </button>
+        )}
       </div>
 
       {/* D4b — QR modal */}
@@ -374,7 +487,7 @@ export function EquipmentDetailEditor({
             <div className="flex justify-center p-4 bg-white rounded-xl">
               <QRCodeSVG value={qrValue} size={180} />
             </div>
-            <p className="font-mono text-xs text-[var(--text-tertiary)]">{equipment.qrCode}</p>
+            <p className="font-mono text-xs text-[var(--text-tertiary)]">{qrCode}</p>
             <p className="text-2xs text-[var(--text-tertiary)]">{equipment.name}</p>
           </div>
         </div>
@@ -419,21 +532,38 @@ function TemplateFieldWithDefault({
     );
   }
 
+  if (field.type === "date") {
+    return <DateFieldEditor name={name} label={label} defaultValue={defaultValue} />;
+  }
+
   return (
     <div>
       {label}
       <Input
         name={name}
-        type={
-          field.type === "number"
-            ? "number"
-            : field.type === "date"
-              ? "date"
-              : "text"
-        }
+        type={field.type === "number" ? "number" : "text"}
         defaultValue={defaultValue}
         placeholder={field.placeholder}
       />
+    </div>
+  );
+}
+
+function DateFieldEditor({
+  name,
+  label,
+  defaultValue,
+}: {
+  name: string;
+  label: React.JSX.Element;
+  defaultValue: string;
+}) {
+  const [value, setValue] = useState(defaultValue);
+  return (
+    <div>
+      {label}
+      <DatePicker value={value} onChange={setValue} placeholder="Seleccionar fecha" />
+      <input type="hidden" name={name} value={value} />
     </div>
   );
 }

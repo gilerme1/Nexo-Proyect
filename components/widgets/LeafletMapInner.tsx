@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
+import { Crosshair } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 interface LocationPoint {
@@ -47,30 +48,66 @@ export default function LeafletMapInner({ points, height }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    if (mapRef.current) return; // already initialized
+  const pointsKey = useMemo(
+    () =>
+      points
+        .map((p) => `${p.id}:${p.latitude ?? ""}:${p.longitude ?? ""}:${p.status ?? ""}:${p.color ?? ""}`)
+        .join("|"),
+    [points],
+  );
 
-    const validPoints = points.filter(
-      (p) => typeof p.latitude === "number" && typeof p.longitude === "number",
-    ) as Array<LocationPoint & { latitude: number; longitude: number }>;
+  const validPoints = useMemo(
+    () =>
+      points.filter(
+        (p) => typeof p.latitude === "number" && typeof p.longitude === "number",
+      ) as Array<LocationPoint & { latitude: number; longitude: number }>,
+    [pointsKey],
+  );
 
+  const centerMap = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
     if (validPoints.length === 0) return;
 
-    // Compute bounds
-    const bounds = L.latLngBounds(
-      validPoints.map((p) => [p.latitude, p.longitude] as [number, number]),
+    if (validPoints.length === 1) {
+      map.setView([validPoints[0].latitude, validPoints[0].longitude], 15, {
+        animate: true,
+      });
+      return;
+    }
+
+    map.fitBounds(
+      L.latLngBounds(
+        validPoints.map((p) => [p.latitude, p.longitude] as [number, number]),
+      ),
+      { padding: [40, 40], animate: true },
     );
+  }, [validPoints]);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    if (mapRef.current) return;
+    if (validPoints.length === 0) return;
 
     const map = L.map(containerRef.current, {
       zoomControl: true,
       attributionControl: true,
+      scrollWheelZoom: false,
     });
+
+    // Belt and suspenders: keep page scrolling natural even if Leaflet internals
+    // or plugins try to re-enable wheel zoom later.
+    map.scrollWheelZoom.disable();
 
     if (validPoints.length === 1) {
       map.setView([validPoints[0].latitude, validPoints[0].longitude], 15);
     } else {
-      map.fitBounds(bounds, { padding: [40, 40] });
+      map.fitBounds(
+        L.latLngBounds(
+          validPoints.map((p) => [p.latitude, p.longitude] as [number, number]),
+        ),
+        { padding: [40, 40] },
+      );
     }
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -98,10 +135,23 @@ export default function LeafletMapInner({ points, height }: Props) {
       map.remove();
       mapRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(points.map((p) => p.id))]);
+  }, [validPoints]);
 
-  return <div ref={containerRef} style={{ width: "100%", height }} />;
+  return (
+    <div className="relative" style={{ width: "100%", height }}>
+      <div ref={containerRef} style={{ width: "100%", height }} />
+      <button
+        type="button"
+        onClick={centerMap}
+        aria-label="Centrar mapa"
+        title="Centrar mapa"
+        className="absolute right-3 top-3 z-[500] inline-flex h-9 items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--bg-card-elevated)] px-3 text-xs font-medium text-[var(--text-secondary)] shadow-[var(--shadow-elevated)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+      >
+        <Crosshair className="h-4 w-4" />
+        Centrar mapa
+      </button>
+    </div>
+  );
 }
 
 function escapeHtml(str: string): string {

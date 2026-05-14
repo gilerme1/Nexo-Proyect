@@ -83,12 +83,12 @@ export function CustomizationPanel({ tenantId, currentLogoUrl, tenantAccentColor
 
   const panel = (
     <>
-      {/* Trigger button — fixed to right edge middle */}
+      {/* Trigger button — fixed to right edge, desktop only */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Personalizar apariencia"
         style={{ position: "fixed", right: 0, top: "50%", transform: "translateY(-50%)", zIndex: 9998 }}
-        className="flex items-center pl-2.5 pr-1.5 py-3 bg-[var(--accent-500)] text-white rounded-l-2xl shadow-lg hover:pl-3.5 transition-all duration-200"
+        className="hidden lg:flex items-center pl-2.5 pr-1.5 py-3 bg-[var(--accent-500)] text-white rounded-l-2xl shadow-lg hover:pl-3.5 transition-all duration-200"
       >
         <Paintbrush2 className="h-4 w-4" />
       </button>

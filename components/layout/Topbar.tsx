@@ -2,9 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, ScanLine, Wrench, Building2, MapPin, LogOut, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Search, Bell, ScanLine, Wrench, Building2, MapPin, LogOut } from "lucide-react";
 import { BRAND } from "@/lib/brand";
-import { useSidebar } from "./SidebarContext";
+import { HamburgerButton } from "./HamburgerButton";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tooltip } from "@/components/ui/Tooltip";
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function Topbar({ scope, scopeLabel, user, searchIndex = [], tenantLogoUrl }: Props) {
-  const { isDesktop, collapsed, toggleCollapsed } = useSidebar();
+
   const [scannerOpen, setScannerOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
@@ -69,23 +69,9 @@ export function Topbar({ scope, scopeLabel, user, searchIndex = [], tenantLogoUr
   return (
     <>
       <header className="h-16 sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between gap-3 bg-[var(--bg-page)]/80 backdrop-blur-md border-b border-[var(--border-subtle)]">
-        {/* Left: collapse toggle (desktop) + hamburger (mobile) + brand */}
+        {/* Left: hamburger (desktop animated, mobile drawer opener) + brand */}
         <div className="flex items-center gap-2 min-w-0">
-          {/* Desktop sidebar toggle */}
-          {isDesktop && (
-            <Tooltip content={collapsed ? "Expandir sidebar" : "Colapsar sidebar"} side="bottom">
-              <button
-                onClick={toggleCollapsed}
-                aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
-                className="grid h-9 w-9 place-items-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              >
-                {collapsed
-                  ? <PanelLeft className="h-4 w-4" />
-                  : <PanelLeftClose className="h-4 w-4" />
-                }
-              </button>
-            </Tooltip>
-          )}
+          <HamburgerButton />
 
           <div className="flex items-center gap-2 min-w-0">
             {tenantLogoUrl ? (

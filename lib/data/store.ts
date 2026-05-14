@@ -40,7 +40,17 @@ declare global {
   var __maintly_store__: Store | undefined;
 }
 
+export interface BrandConfig {
+  name: string;
+  shortName: string;
+  tagline: string;
+  monogram: string;
+  supportEmail: string;
+  websiteUrl: string;
+}
+
 interface Store {
+  brand: BrandConfig;
   tenants: Tenant[];
   users: User[];
   memberships: Membership[];
@@ -64,6 +74,14 @@ interface Store {
 
 function createStore(): Store {
   return {
+    brand: {
+      name: "Maintly",
+      shortName: "Maintly",
+      tagline: "Plataforma de gestión de mantenimiento",
+      monogram: "M",
+      supportEmail: "soporte@maintly.app",
+      websiteUrl: "https://maintly.app",
+    },
     tenants: [...mockTenants],
     users: [...mockUsers],
     memberships: [...mockMemberships],

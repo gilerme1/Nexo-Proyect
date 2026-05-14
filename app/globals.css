@@ -254,10 +254,13 @@ body::after {
   mix-blend-mode: multiply;
 }
 
-/* Ensure children sit above the bg layers */
-body > * {
-  position: relative;
-  z-index: 1;
+/* Ensure children sit above the bg layers.
+   Must be in @layer base so Tailwind utilities (position: fixed, etc.) can override it. */
+@layer base {
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* ============================================================================

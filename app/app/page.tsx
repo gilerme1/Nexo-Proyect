@@ -12,12 +12,11 @@ import {
   ChevronRight,
   AlertCircle,
   AlertTriangle,
-  ScanLine,
   Search,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/get-session";
-import { getTenantById, getUserById } from "@/lib/data/users";
+import { getTenantById } from "@/lib/data/users";
 import { store } from "@/lib/data/store";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -31,6 +30,7 @@ import { LocationMap } from "@/components/widgets/LocationMap";
 import { EquipmentStatusBadge } from "@/components/ui/EquipmentStatusBadge";
 import { MobileScanAction } from "@/components/layout/MobileScanAction";
 import { InspectionButton } from "@/components/mobile/InspectionButton";
+import { TechnicianDashboard } from "@/components/tenant/TechnicianDashboard";
 import {
   getClientsByTenant,
   getEquipmentByTenant,
@@ -59,11 +59,34 @@ export default async function TenantDashboardPage() {
   const equipment = getEquipmentByTenant(tenantId);
   const reports = getReportsByTenant(tenantId);
   const locations = getLocationsByTenant(tenantId);
+  const clientsById = new Map(clients.map((client) => [client.id, client]));
+  const equipmentById = new Map(equipment.map((item) => [item.id, item]));
+  const usersById = new Map(store.users.map((item) => [item.id, item]));
 
-  const operational = equipment.filter((e) => e.status === "operational").length;
-  const observed = equipment.filter(
-    (e) => e.status === "observed" || e.status === "critical",
-  ).length;
+  const currentUser = store.users.find((u) => u.id === session.userId);
+  const myReports = [...reports]
+    .filter((r) => r.technicianId === session.userId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5);
+
+  // Technician role → simplified field-work dashboard
+  if (session.role === "technician") {
+    return (
+      <TechnicianDashboard
+        userName={currentUser?.name ?? "Técnico"}
+        equipmentById={equipmentById}
+        locations={locations}
+        equipment={equipment}
+      />
+    );
+  }
+
+  let operational = 0;
+  let observed = 0;
+  for (const item of equipment) {
+    if (item.status === "operational") operational += 1;
+    if (item.status === "observed" || item.status === "critical") observed += 1;
+  }
 
   const overdueCount = store.scheduledMaintenances.filter(
     (m) => m.tenantId === tenantId && m.status === "overdue",
@@ -86,12 +109,7 @@ export default async function TenantDashboardPage() {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  // Mobile: my reports (by technician) and pending maintenances
-  const myReports = [...reports]
-    .filter((r) => r.technicianId === session.userId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 3);
-
+  // Mobile: pending maintenances
   const mobileMaintenances = store.scheduledMaintenances
     .filter(
       (m) =>
@@ -111,8 +129,12 @@ export default async function TenantDashboardPage() {
   const reportsTrend = reportsByMonth(reports, months);
   const week = reportsByDay(reports);
 
+  let validMapPointCount = 0;
   const mapPoints = locations.map((l) => {
-    const client = clients.find((c) => c.id === l.clientId);
+    if (typeof l.latitude === "number" && typeof l.longitude === "number") {
+      validMapPointCount += 1;
+    }
+    const client = clientsById.get(l.clientId);
     return {
       id: l.id,
       name: `${client?.name ?? "—"} · ${l.name}`,
@@ -126,12 +148,20 @@ export default async function TenantDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Mobile quick actions — hidden on desktop */}
-      <div className="grid grid-cols-2 gap-3 lg:hidden">
-        <Link href="/app/equipment" className="flex items-center justify-center gap-2 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] py-3 text-sm font-medium text-[var(--text-primary)]">
-          <Search className="h-4 w-4 text-[var(--text-tertiary)]" />
-          Buscar equipo
-        </Link>
+      <div className="lg:hidden space-y-3">
+        {/* Primary: scan */}
         <MobileScanAction />
+        {/* Secondary row */}
+        <div className="grid grid-cols-2 gap-3">
+          <Link
+            href="/app/equipment"
+            className="group flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] py-4 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--bg-hover)] active:opacity-70 transition-all duration-150"
+          >
+            <Search className="h-5 w-5 text-[var(--text-tertiary)] group-hover:scale-110 transition-transform duration-150" />
+            Buscar equipo
+          </Link>
+          <InspectionButton locations={locations} equipment={equipment} secondary />
+        </div>
       </div>
 
       <PageHeader
@@ -149,7 +179,7 @@ export default async function TenantDashboardPage() {
                 Generar QR
               </Button>
             </Link>
-            <Link href="/app/reports/new">
+            <Link href="/app/reports/new" className="hidden sm:block">
               <Button
                 size="sm"
                 pill
@@ -161,11 +191,6 @@ export default async function TenantDashboardPage() {
           </div>
         }
       />
-
-      {/* Nueva inspección — mobile only */}
-      <div className="lg:hidden">
-        <InspectionButton locations={locations} equipment={equipment} />
-      </div>
 
       {/* Hero row — desktop only */}
       <div className="hidden lg:grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -270,12 +295,12 @@ export default async function TenantDashboardPage() {
             ) : (
               <ul className="space-y-1">
                 {myReports.map((r) => {
-                  const eq = equipment.find((e) => e.id === r.equipmentId);
+                  const eq = equipmentById.get(r.equipmentId);
                   return (
                     <li key={r.id}>
                       <Link
                         href={`/app/reports/${r.id}`}
-                        className="flex items-center justify-between gap-3 px-3 py-3 rounded-xl hover:bg-[var(--bg-hover)]"
+                        className="flex items-center justify-between gap-3 px-3 py-3 rounded-xl hover:bg-[var(--bg-hover)] active:bg-[var(--bg-hover)] active:opacity-70 transition-opacity duration-100"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium text-[var(--text-primary)] tabular">
@@ -313,13 +338,13 @@ export default async function TenantDashboardPage() {
             <CardBody className="p-2">
               <ul className="space-y-1">
                 {mobileMaintenances.map((m) => {
-                  const eq = equipment.find((e) => e.id === m.equipmentId);
+                  const eq = equipmentById.get(m.equipmentId);
                   const isOverdue = m.status === "overdue";
                   return (
                     <li key={m.id}>
                       <Link
                         href={`/app/reports/new?equipmentId=${m.equipmentId}&scheduledId=${m.id}`}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-[var(--bg-hover)]"
+                        className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-[var(--bg-hover)] active:bg-[var(--bg-hover)] active:opacity-70 transition-opacity duration-100"
                       >
                         <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${isOverdue ? "bg-[var(--danger-bg)] text-[var(--danger-fg)]" : "bg-[var(--info-bg)] text-[var(--info-fg)]"}`}>
                           <CalendarClock className="h-3.5 w-3.5" />
@@ -364,7 +389,7 @@ export default async function TenantDashboardPage() {
           <CardBody className="p-2">
             <ul className="space-y-1">
               {alertEquipment.map((eq) => {
-                const client = clients.find((c) => c.id === eq.clientId);
+                const client = clientsById.get(eq.clientId);
                 return (
                   <li key={eq.id}>
                     <Link
@@ -402,7 +427,7 @@ export default async function TenantDashboardPage() {
               Cobertura de ubicaciones
             </h3>
             <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
-              {mapPoints.filter((p) => p.latitude && p.longitude).length} ubicaciones en el mapa
+              {validMapPointCount} ubicaciones en el mapa
             </p>
           </div>
         </div>
@@ -442,8 +467,8 @@ export default async function TenantDashboardPage() {
               ) : (
                 <ul className="space-y-1">
                   {recentReports.map((r) => {
-                    const tech = getUserById(r.technicianId);
-                    const client = clients.find((c) => c.id === r.clientId);
+                    const tech = usersById.get(r.technicianId);
+                    const client = clientsById.get(r.clientId);
                     return (
                       <li key={r.id}>
                         <Link
@@ -593,14 +618,6 @@ export default async function TenantDashboardPage() {
         </div>
       </div>
 
-      {/* FAB — mobile only */}
-      <Link
-        href="/app/reports/new"
-        className="fixed bottom-20 right-4 z-40 lg:hidden flex items-center gap-2 rounded-full bg-[var(--accent-500)] px-5 py-3 text-sm font-semibold text-white shadow-lg"
-      >
-        <Plus className="h-4 w-4" />
-        Nuevo reporte
-      </Link>
     </div>
   );
 }

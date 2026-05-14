@@ -99,7 +99,7 @@ export default async function AppLayout({
             being hidden behind the mobile bottom nav (64px + iPhone notch).
             On desktop (lg+) we reset to normal vertical padding.
           */}
-          <main className="flex-1 px-4 md:px-6 py-6 max-w-screen-2xl w-full
+          <main className="flex-1 px-4 md:px-6 py-6
                            pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-6">
             {children}
           </main>

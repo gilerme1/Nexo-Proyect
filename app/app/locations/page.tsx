@@ -11,11 +11,31 @@ import { store } from "@/lib/data/store";
 export default async function LocationsPage() {
   const session = await getSession();
   if (session.workspace.kind !== "tenant") redirect("/");
-  if (session.role !== "tenant_admin") redirect("/app");
+  if (session.role !== "tenant_admin" && session.role !== "platform_admin") redirect("/app");
   const tenantId = session.workspace.tenantId;
 
   const clients = store.clients.filter((c) => c.tenantId === tenantId);
-  const total = store.locations.filter((l) => l.tenantId === tenantId).length;
+  const tenantLocations = store.locations.filter((l) => l.tenantId === tenantId);
+  const total = tenantLocations.length;
+  const locationsByClient = new Map<string, typeof tenantLocations>();
+  const equipmentCountByLocation = new Map<string, number>();
+
+  for (const loc of tenantLocations) {
+    const locs = locationsByClient.get(loc.clientId);
+    if (locs) {
+      locs.push(loc);
+    } else {
+      locationsByClient.set(loc.clientId, [loc]);
+    }
+  }
+
+  for (const item of store.equipment) {
+    if (item.tenantId !== tenantId || !item.locationId) continue;
+    equipmentCountByLocation.set(
+      item.locationId,
+      (equipmentCountByLocation.get(item.locationId) ?? 0) + 1,
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -35,9 +55,7 @@ export default async function LocationsPage() {
       ) : (
         <div className="space-y-4">
           {clients.map((client) => {
-            const locs = store.locations.filter(
-              (l) => l.clientId === client.id,
-            );
+            const locs = locationsByClient.get(client.id) ?? [];
             if (locs.length === 0) return null;
 
             return (
@@ -65,9 +83,7 @@ export default async function LocationsPage() {
                 <CardBody className="p-2">
                   <ul className="space-y-1">
                     {locs.map((loc) => {
-                      const eqCount = store.equipment.filter(
-                        (e) => e.locationId === loc.id,
-                      ).length;
+                      const eqCount = equipmentCountByLocation.get(loc.id) ?? 0;
                       return (
                         <li
                           key={loc.id}

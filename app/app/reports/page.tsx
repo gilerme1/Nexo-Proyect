@@ -1,16 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileText, Plus, ArrowUpRight } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Card, CardBody } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ReportsFilterClient } from "@/components/reports/ReportsFilterClient";
 import { getSession } from "@/lib/auth/get-session";
 import { store } from "@/lib/data/store";
-import { formatRelative } from "@/lib/utils/format";
 
 export default async function ReportsPage() {
   const session = await getSession();
@@ -25,12 +22,15 @@ export default async function ReportsPage() {
   const clients = store.clients.filter((c) => c.tenantId === tenantId);
   const equipment = store.equipment.filter((e) => e.tenantId === tenantId);
   const users = store.users;
+  const clientsById = new Map(clients.map((client) => [client.id, client]));
+  const equipmentById = new Map(equipment.map((item) => [item.id, item]));
+  const usersById = new Map(users.map((user) => [user.id, user]));
 
   const enriched = reports.map((r) => ({
     ...r,
-    clientName: clients.find((c) => c.id === r.clientId)?.name ?? "—",
-    equipmentName: equipment.find((e) => e.id === r.equipmentId)?.name ?? "—",
-    techName: users.find((u) => u.id === r.technicianId)?.name ?? "—",
+    clientName: clientsById.get(r.clientId)?.name ?? "—",
+    equipmentName: equipmentById.get(r.equipmentId)?.name ?? "—",
+    techName: usersById.get(r.technicianId)?.name ?? "—",
     technicianId: r.technicianId,
   }));
 

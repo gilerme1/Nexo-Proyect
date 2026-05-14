@@ -3,6 +3,38 @@
 import { revalidatePath } from "next/cache";
 import { store } from "@/lib/data/store";
 import { getSession } from "@/lib/auth/get-session";
+import type { BrandConfig } from "@/lib/data/store";
+
+export async function updatePlatformBrand(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await getSession();
+  if (session.workspace.kind !== "platform") {
+    return { ok: false, error: "Solo Super Admins pueden editar la marca." };
+  }
+
+  const patch: Partial<BrandConfig> = {};
+  const name      = String(formData.get("name")         ?? "").trim();
+  const shortName = String(formData.get("shortName")     ?? "").trim();
+  const tagline   = String(formData.get("tagline")       ?? "").trim();
+  const monogram  = String(formData.get("monogram")      ?? "").trim().charAt(0).toUpperCase();
+  const supportEmail = String(formData.get("supportEmail") ?? "").trim();
+  const websiteUrl   = String(formData.get("websiteUrl")   ?? "").trim();
+
+  if (name)         patch.name         = name;
+  if (shortName)    patch.shortName    = shortName;
+  if (tagline)      patch.tagline      = tagline;
+  if (monogram)     patch.monogram     = monogram;
+  if (supportEmail) patch.supportEmail = supportEmail;
+  if (websiteUrl)   patch.websiteUrl   = websiteUrl;
+
+  Object.assign(store.brand, patch);
+
+  revalidatePath("/platform/settings");
+  revalidatePath("/platform");
+  revalidatePath("/app");
+  return { ok: true };
+}
 
 export interface SaveBrandingResult {
   ok: boolean;

@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  CalendarClock, Plus, CheckCircle2, AlertCircle, Clock,
-} from "lucide-react";
+import { CalendarClock, AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -11,7 +9,6 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MaintenanceCalendar } from "@/components/maintenances/MaintenanceCalendar";
 import { MobileMaintenanceList } from "@/components/maintenances/MobileMaintenanceList";
 import { NewMaintenanceForm } from "@/components/maintenances/NewMaintenanceForm";
-import { completeScheduledMaintenance } from "@/lib/actions/reports";
 import { getSession } from "@/lib/auth/get-session";
 import { store } from "@/lib/data/store";
 import { formatDate } from "@/lib/utils/format";
@@ -34,12 +31,14 @@ export default async function MaintenancesPage() {
   const equipment = store.equipment.filter((e) => e.tenantId === tenantId);
   const clients = store.clients.filter((c) => c.tenantId === tenantId);
   const locations = store.locations.filter((l) => l.tenantId === tenantId);
+  const equipmentById = new Map(equipment.map((item) => [item.id, item]));
+  const clientsById = new Map(clients.map((client) => [client.id, client]));
 
   const overdueCount = maintenances.filter((m) => m.status === "overdue").length;
 
   // Calendar events: next 3 months
   const calendarEvents = maintenances.map((m) => {
-    const eq = equipment.find((e) => e.id === m.equipmentId);
+    const eq = equipmentById.get(m.equipmentId);
     return {
       id: m.id,
       title: m.title,
@@ -111,8 +110,8 @@ export default async function MaintenancesPage() {
           <CardBody className="p-2">
             <ul className="space-y-1">
               {maintenances.map((m) => {
-                const eq = equipment.find((e) => e.id === m.equipmentId);
-                const client = clients.find((c) => c.id === m.clientId);
+                const eq = equipmentById.get(m.equipmentId);
+                const client = clientsById.get(m.clientId);
                 const isOverdue = m.status === "overdue";
                 return (
                   <li key={m.id} className="flex items-center gap-4 px-3 py-3.5 rounded-xl hover:bg-[var(--bg-hover)]">

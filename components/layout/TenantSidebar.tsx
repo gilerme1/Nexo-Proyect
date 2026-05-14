@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { SidebarShell } from "./SidebarShell";
 import { SidebarItem, SidebarSection } from "./SidebarItem";
-import { SidebarCollapseToggle } from "./SidebarCollapseToggle";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import type { Tenant, AppRole } from "@/lib/types";
 
@@ -61,7 +60,7 @@ export function TenantSidebar({ tenants, currentTenant, role, overdueCount = 0 }
       : pathname === href || pathname.startsWith(href + "/");
 
   const visible = (item: NavItem) =>
-    !item.roles || item.roles.includes(role);
+    role === "platform_admin" || !item.roles || item.roles.includes(role);
 
   const badges: Record<string, number> = { overdueCount };
 
@@ -73,6 +72,7 @@ export function TenantSidebar({ tenants, currentTenant, role, overdueCount = 0 }
       <WorkspaceSwitcher
         current={{ kind: "tenant", tenant: currentTenant }}
         tenants={tenants}
+        isPlatformAdmin={role === "platform_admin"}
       />
 
       <nav className="flex-1 overflow-y-auto mt-4 -mx-1 px-1">
@@ -110,9 +110,6 @@ export function TenantSidebar({ tenants, currentTenant, role, overdueCount = 0 }
         )}
       </nav>
 
-      <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
-        <SidebarCollapseToggle />
-      </div>
     </SidebarShell>
   );
 }

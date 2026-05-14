@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useDeferredValue, useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Wrench,
@@ -31,6 +31,11 @@ interface Props {
 }
 
 type DraftFilter = "all" | "drafts" | "complete";
+type EquipmentRow = {
+  item: Equipment;
+  createdTime: number;
+  searchText: string;
+};
 
 const STATUS_OPTIONS: { value: EquipmentStatus | ""; label: string }[] = [
   { value: "", label: "Todos los estados" },
@@ -42,50 +47,81 @@ const STATUS_OPTIONS: { value: EquipmentStatus | ""; label: string }[] = [
   { value: "pending",        label: "Pendiente" },
 ];
 
+function toSearchText(e: Equipment): string {
+  const serialNumber = e.data?.serialNumber as string | undefined;
+  const licensePlate = e.data?.licensePlate as string | undefined;
+  return `${e.name} ${e.internalCode} ${serialNumber ?? ""} ${licensePlate ?? ""}`.toLowerCase();
+}
+
 export function EquipmentListClient({ equipment, clients, locations, equipmentTypes, preselectedClientId }: Props) {
   const [draftFilter, setDraftFilter] = useState<DraftFilter>("all");
   const [query, setQuery]             = useState("");
   const [clientId, setClientId]       = useState(preselectedClientId ?? "");
   const [status, setStatus]           = useState<EquipmentStatus | "">("");
   const [mobileQuery, setMobileQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+  const deferredMobileQuery = useDeferredValue(mobileQuery);
+  const equipmentRows = useMemo<EquipmentRow[]>(
+    () =>
+      equipment.map((item) => ({
+        item,
+        createdTime: new Date(item.createdAt).getTime(),
+        searchText: toSearchText(item),
+      })),
+    [equipment],
+  );
 
-  const draftCount    = equipment.filter((e) => e.isDraft).length;
+  const draftCount = useMemo(
+    () => equipment.reduce((total, item) => total + (item.isDraft ? 1 : 0), 0),
+    [equipment],
+  );
   const completeCount = equipment.length - draftCount;
+  const clientsById = useMemo(
+    () => new Map(clients.map((client) => [client.id, client])),
+    [clients],
+  );
+  const locationsById = useMemo(
+    () => new Map(locations.map((location) => [location.id, location])),
+    [locations],
+  );
+  const equipmentTypesById = useMemo(
+    () => new Map(equipmentTypes.map((type) => [type.id, type])),
+    [equipmentTypes],
+  );
 
   const filtered = useMemo(() => {
-    let list = [...equipment];
-    if (draftFilter === "drafts")   list = list.filter((e) => e.isDraft);
-    if (draftFilter === "complete") list = list.filter((e) => !e.isDraft);
-    if (clientId) list = list.filter((e) => e.clientId === clientId);
-    if (status)   list = list.filter((e) => e.status === status);
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      list = list.filter(
-        (e) =>
-          e.name.toLowerCase().includes(q) ||
-          e.internalCode.toLowerCase().includes(q),
-      );
-    }
-    return list.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-  }, [equipment, draftFilter, clientId, status, query]);
+    const q = deferredQuery.trim().toLowerCase();
+    return equipmentRows
+      .filter(({ item, searchText }) => {
+        if (draftFilter === "drafts" && !item.isDraft) return false;
+        if (draftFilter === "complete" && item.isDraft) return false;
+        if (clientId && item.clientId !== clientId) return false;
+        if (status && item.status !== status) return false;
+        if (q && !searchText.includes(q)) return false;
+        return true;
+      })
+      .sort((a, b) => b.createdTime - a.createdTime)
+      .map(({ item }) => item);
+  }, [equipmentRows, draftFilter, clientId, status, deferredQuery]);
 
   const selectedClient = preselectedClientId
-    ? clients.find((c) => c.id === preselectedClientId)
+    ? clientsById.get(preselectedClientId)
     : null;
 
+  // Mobile: search within client (if selected) or globally (if typing without client)
   const mobileFiltered = useMemo(() => {
-    if (!preselectedClientId) return [];
-    let list = equipment.filter((e) => e.clientId === preselectedClientId);
-    if (mobileQuery.trim()) {
-      const q = mobileQuery.toLowerCase();
-      list = list.filter(
-        (e) => e.name.toLowerCase().includes(q) || e.internalCode.toLowerCase().includes(q),
-      );
-    }
-    return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [equipment, preselectedClientId, mobileQuery]);
+    const q = deferredMobileQuery.trim().toLowerCase();
+    return equipmentRows
+      .filter(({ item, searchText }) => {
+        if (preselectedClientId && item.clientId !== preselectedClientId) return false;
+        if (q && !searchText.includes(q)) return false;
+        return true;
+      })
+      .sort((a, b) => b.createdTime - a.createdTime)
+      .map(({ item }) => item);
+  }, [equipmentRows, preselectedClientId, deferredMobileQuery]);
+
+  const showMobileResults = preselectedClientId || deferredMobileQuery.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -102,73 +138,86 @@ export function EquipmentListClient({ equipment, clients, locations, equipmentTy
       />
 
       {/* Mobile view */}
-      <div className="lg:hidden">
-        {!preselectedClientId ? (
+      <div className="lg:hidden space-y-3">
+        {/* Search always visible on mobile */}
+        <Input
+          value={mobileQuery}
+          onChange={(e) => setMobileQuery(e.target.value)}
+          leftIcon={<Search className="h-3.5 w-3.5" />}
+          placeholder="Buscar por nombre, N° serie o matrícula…"
+        />
+
+        {!showMobileResults ? (
+          /* No client selected, no query → prompt */
           <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
             <span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-tertiary)]">
               <MapPin className="h-6 w-6" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">Elegí un cliente primero</p>
-              <p className="text-xs text-[var(--text-tertiary)] mt-1">Usá el mapa para seleccionar un cliente y ver sus equipos.</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Buscá o elegí un cliente</p>
+              <p className="text-xs text-[var(--text-tertiary)] mt-1">
+                Escribí un nombre, N° de serie o matrícula, o usá el mapa para seleccionar un cliente.
+              </p>
             </div>
             <Link href="/app/map">
               <Button size="sm" pill>Ir al Mapa</Button>
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/app/map"
-                className="flex items-center gap-1 text-xs text-[var(--accent-500)] font-medium"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Mapa
-              </Link>
-              <h2 className="text-sm font-semibold text-[var(--text-primary)] flex-1 truncate">
-                Equipos de {selectedClient?.name ?? "…"}
-              </h2>
-              <span className="text-2xs tabular text-[var(--text-tertiary)] bg-[var(--bg-card)] border border-[var(--border-subtle)] px-2 py-0.5 rounded-full">
-                {mobileFiltered.length}
-              </span>
-            </div>
-            <Input
-              value={mobileQuery}
-              onChange={(e) => setMobileQuery(e.target.value)}
-              leftIcon={<Search className="h-3.5 w-3.5" />}
-              placeholder="Buscar por nombre o código…"
-            />
+          <div className="space-y-2">
+            {preselectedClientId && (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/app/map"
+                  className="flex items-center gap-1 text-xs text-[var(--accent-500)] font-medium"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Mapa
+                </Link>
+                <h2 className="text-sm font-semibold text-[var(--text-primary)] flex-1 truncate">
+                  Equipos de {selectedClient?.name ?? "…"}
+                </h2>
+                <span className="text-2xs tabular text-[var(--text-tertiary)] bg-[var(--bg-card)] border border-[var(--border-subtle)] px-2 py-0.5 rounded-full">
+                  {mobileFiltered.length}
+                </span>
+              </div>
+            )}
+
             {mobileFiltered.length === 0 ? (
               <div className="py-10 text-center text-sm text-[var(--text-tertiary)]">
                 {mobileQuery ? "Sin resultados para esa búsqueda." : "Este cliente no tiene equipos."}
               </div>
             ) : (
-              <div className="space-y-2">
-                {mobileFiltered.map((eq) => {
-                  const loc = locations.find((l) => l.id === eq.locationId);
-                  return (
-                    <Link
-                      key={eq.id}
-                      href={`/app/equipment/${eq.id}`}
-                      className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{eq.name}</p>
-                        <p className="text-2xs text-[var(--text-tertiary)] truncate mt-0.5">
-                          {eq.internalCode}{loc ? ` · ${loc.name}` : ""}
+              mobileFiltered.map((eq) => {
+                const loc = eq.locationId ? locationsById.get(eq.locationId) : undefined;
+                const client = clientsById.get(eq.clientId);
+                const serialNumber = eq.data?.serialNumber as string | undefined;
+                const licensePlate = eq.data?.licensePlate as string | undefined;
+                return (
+                  <Link
+                    key={eq.id}
+                    href={`/app/equipment/${eq.id}`}
+                    className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{eq.name}</p>
+                      <p className="text-2xs text-[var(--text-tertiary)] truncate mt-0.5">
+                        {eq.internalCode}
+                        {serialNumber ? ` · S/N: ${serialNumber}` : ""}
+                        {licensePlate ? ` · Pat: ${licensePlate}` : ""}
+                        {!preselectedClientId && client ? ` · ${client.name}` : ""}
+                        {loc ? ` · ${loc.name}` : ""}
+                      </p>
+                      {eq.lastMaintenanceAt && (
+                        <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
+                          Último servicio {formatRelative(eq.lastMaintenanceAt)}
                         </p>
-                        {eq.lastMaintenanceAt && (
-                          <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
-                            Último servicio {formatRelative(eq.lastMaintenanceAt)}
-                          </p>
-                        )}
-                      </div>
-                      <EquipmentStatusBadge status={eq.status} />
-                    </Link>
-                  );
-                })}
-              </div>
+                      )}
+                    </div>
+                    <EquipmentStatusBadge status={eq.status} />
+                  </Link>
+                );
+              })
             )}
           </div>
         )}
@@ -202,7 +251,7 @@ export function EquipmentListClient({ equipment, clients, locations, equipmentTy
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               leftIcon={<Search className="h-3.5 w-3.5" />}
-              placeholder="Buscar por nombre o código…"
+              placeholder="Nombre, código, N° serie o matrícula…"
             />
           </div>
         </div>
@@ -233,9 +282,11 @@ export function EquipmentListClient({ equipment, clients, locations, equipmentTy
           <CardBody className="p-2">
             <ul className="space-y-1">
               {filtered.map((eq) => {
-                const client  = clients.find((c) => c.id === eq.clientId);
-                const loc     = locations.find((l) => l.id === eq.locationId);
-                const eqType  = equipmentTypes.find((t) => t.id === eq.equipmentTypeId);
+                const client  = clientsById.get(eq.clientId);
+                const loc     = eq.locationId ? locationsById.get(eq.locationId) : undefined;
+                const eqType  = equipmentTypesById.get(eq.equipmentTypeId);
+                const serialNumber = eq.data?.serialNumber as string | undefined;
+                const licensePlate = eq.data?.licensePlate as string | undefined;
                 return (
                   <li key={eq.id}>
                     <Link
@@ -259,9 +310,11 @@ export function EquipmentListClient({ equipment, clients, locations, equipmentTy
                           <p className="truncate text-2xs text-[var(--text-tertiary)]">
                             {eqType?.name}{client?.name ? ` · ${client.name}` : ""}{loc ? ` · ${loc.name}` : ""}
                           </p>
-                          {eq.lastMaintenanceAt && (
-                            <p className="text-2xs text-[var(--text-tertiary)] mt-0.5">
-                              Último servicio {formatRelative(eq.lastMaintenanceAt)}
+                          {(serialNumber || licensePlate) && (
+                            <p className="truncate text-2xs text-[var(--text-tertiary)] mt-0.5">
+                              {serialNumber ? `S/N: ${serialNumber}` : ""}
+                              {serialNumber && licensePlate ? " · " : ""}
+                              {licensePlate ? `Pat: ${licensePlate}` : ""}
                             </p>
                           )}
                         </div>

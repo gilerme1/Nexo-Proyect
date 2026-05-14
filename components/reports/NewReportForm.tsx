@@ -198,7 +198,7 @@ export function NewReportForm({ equipment, clients, locations, equipmentTypes, s
   const totalItems = enabledSections.flatMap((c) => c.items).length;
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6">
       <Link href="/app/reports" className="inline-flex items-center gap-1.5 text-2xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
         <ArrowLeft className="h-3 w-3" />
         Volver a reportes

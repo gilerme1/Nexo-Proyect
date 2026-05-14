@@ -27,16 +27,31 @@ const STATUS_TONE: Record<string, "neutral" | "info" | "success" | "warning"> = 
 export default async function QrTagsPage() {
   const session = await getSession();
   if (session.workspace.kind !== "tenant") redirect("/");
-  if (session.role !== "tenant_admin") redirect("/app");
+  if (session.role !== "tenant_admin" && session.role !== "platform_admin") redirect("/app");
   const tenantId = session.workspace.tenantId;
 
   const batches = store.qrBatches
     .filter((b) => b.tenantId === tenantId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  const totalTags = store.qrTags.filter((t) => t.tenantId === tenantId).length;
-  const freeTags = store.qrTags.filter((t) => t.tenantId === tenantId && t.status === "free").length;
-  const boundTags = store.qrTags.filter((t) => t.tenantId === tenantId && t.status === "bound").length;
+  let totalTags = 0;
+  let freeTags = 0;
+  let boundTags = 0;
+  const tagsByBatch = new Map<string, typeof store.qrTags>();
+
+  for (const tag of store.qrTags) {
+    if (tag.tenantId !== tenantId) continue;
+    totalTags += 1;
+    if (tag.status === "free") freeTags += 1;
+    if (tag.status === "bound") boundTags += 1;
+
+    const tags = tagsByBatch.get(tag.batchId);
+    if (tags) {
+      tags.push(tag);
+    } else {
+      tagsByBatch.set(tag.batchId, [tag]);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -87,9 +102,13 @@ export default async function QrTagsPage() {
           <CardBody className="p-2">
             <ul className="space-y-1">
               {batches.map((batch) => {
-                const tags = store.qrTags.filter((t) => t.batchId === batch.id);
-                const bound = tags.filter((t) => t.status === "bound").length;
-                const free = tags.filter((t) => t.status === "free").length;
+                const tags = tagsByBatch.get(batch.id) ?? [];
+                let bound = 0;
+                let free = 0;
+                for (const tag of tags) {
+                  if (tag.status === "bound") bound += 1;
+                  if (tag.status === "free") free += 1;
+                }
                 const pct = tags.length > 0 ? Math.round((bound / tags.length) * 100) : 0;
                 return (
                   <li key={batch.id}>
@@ -103,7 +122,9 @@ export default async function QrTagsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm font-medium text-[var(--text-primary)] truncate">{batch.name}</p>
-                          <Badge tone={STATUS_TONE[batch.status]}>{STATUS_LABEL[batch.status]}</Badge>
+                          <Badge tone={STATUS_TONE[batch.status] ?? "neutral"}>
+                            {STATUS_LABEL[batch.status] ?? batch.status}
+                          </Badge>
                         </div>
                         <div className="flex items-center gap-3 text-2xs text-[var(--text-tertiary)]">
                           <span className="tabular">{batch.size} stickers</span>

@@ -44,9 +44,17 @@ export function equipmentCumulativeByMonth(
   equipment: Equipment[],
   months: { key: string; label: string }[],
 ): number[] {
+  const createdAt = equipment
+    .map((e) => new Date(e.createdAt).getTime())
+    .sort((a, b) => a - b);
+  let cursor = 0;
+
   return months.map((m) => {
-    const lastDay = endOfMonth(m.key);
-    return equipment.filter((e) => new Date(e.createdAt) <= lastDay).length;
+    const lastDay = endOfMonth(m.key).getTime();
+    while (cursor < createdAt.length && createdAt[cursor] <= lastDay) {
+      cursor += 1;
+    }
+    return cursor;
   });
 }
 
@@ -85,7 +93,8 @@ export function reportsByDay(
 
   const grouped = new Map<string, number>();
   for (const r of reports) {
-    grouped.set(dayKey(r.date), (grouped.get(dayKey(r.date)) ?? 0) + 1);
+    const key = dayKey(r.date);
+    grouped.set(key, (grouped.get(key) ?? 0) + 1);
   }
 
   for (let i = 0; i < 7; i++) {

@@ -56,7 +56,7 @@ export function NewClientForm() {
         description="Completá los datos básicos del cliente. Podés agregar ubicaciones después."
       />
 
-      <form action={handleSubmit} className="space-y-6 max-w-2xl">
+      <form action={handleSubmit} className="space-y-6">
         <Card>
           <CardBody className="space-y-5">
             <div>

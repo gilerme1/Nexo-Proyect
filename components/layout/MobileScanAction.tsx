@@ -11,9 +11,9 @@ export function MobileScanAction() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent-500)] py-3 text-sm font-medium text-white"
+        className="group w-full flex items-center justify-center gap-2 rounded-2xl bg-[var(--accent-500)] py-6 text-sm font-medium text-white cursor-pointer hover:brightness-110 active:scale-[0.97] transition-all duration-150"
       >
-        <ScanLine className="h-4 w-4" />
+        <ScanLine className="h-4 w-4 group-hover:scale-110 transition-transform duration-150" />
         Escanear QR
       </button>
       {open && <QrScanner onClose={() => setOpen(false)} />}

@@ -29,6 +29,8 @@ export default function PlatformDashboardPage() {
   const totalTenants = store.tenants.length;
   const activeTenants = store.tenants.filter((t) => t.status === "active").length;
   const totalEquipment = store.equipment.length;
+  const clientsById = new Map(store.clients.map((client) => [client.id, client]));
+  const tenantsById = new Map(store.tenants.map((tenant) => [tenant.id, tenant]));
 
   // Real time series
   const months = lastNMonths(12);
@@ -70,8 +72,8 @@ export default function PlatformDashboardPage() {
   const platformMapPoints = store.locations
     .filter((l) => l.latitude && l.longitude)
     .map((l) => {
-      const client = store.clients.find((c) => c.id === l.clientId);
-      const tenant = store.tenants.find((t) => t.id === l.tenantId);
+      const client = clientsById.get(l.clientId);
+      const tenant = tenantsById.get(l.tenantId);
       return {
         id: l.id,
         name: l.name,

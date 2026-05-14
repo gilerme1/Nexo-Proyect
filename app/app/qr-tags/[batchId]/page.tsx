@@ -41,8 +41,19 @@ export default async function QrBatchDetailPage({
     .filter((t) => t.batchId === batchId)
     .sort((a, b) => a.code.localeCompare(b.code));
 
-  const freeTags = tags.filter((t) => t.status === "free");
-  const bound = tags.filter((t) => t.status === "bound").length;
+  const freeTags: typeof tags = [];
+  let bound = 0;
+  let voided = 0;
+  for (const tag of tags) {
+    if (tag.status === "free") freeTags.push(tag);
+    if (tag.status === "bound") bound += 1;
+    if (tag.status === "voided") voided += 1;
+  }
+  const equipmentById = new Map(
+    store.equipment
+      .filter((item) => item.tenantId === tenantId)
+      .map((item) => [item.id, item]),
+  );
   const pct = tags.length > 0 ? Math.round((bound / tags.length) * 100) : 0;
 
   return (
@@ -89,7 +100,7 @@ export default async function QrBatchDetailPage({
             </span>
             <span className="flex items-center gap-1">
               <XCircle className="h-3 w-3 text-[var(--text-tertiary)]" />
-              {tags.filter((t) => t.status === "voided").length} anulados
+              {voided} anulados
             </span>
           </div>
         </CardBody>
@@ -108,9 +119,7 @@ export default async function QrBatchDetailPage({
         <CardBody className="p-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {tags.map((tag) => {
-              const eq = tag.equipmentId
-                ? store.equipment.find((e) => e.id === tag.equipmentId)
-                : null;
+              const eq = tag.equipmentId ? equipmentById.get(tag.equipmentId) : null;
               return (
                 <div
                   key={tag.id}
@@ -120,8 +129,8 @@ export default async function QrBatchDetailPage({
                   <code className="text-2xs font-mono text-[var(--text-primary)] font-semibold leading-tight">
                     {tag.code}
                   </code>
-                  <Badge tone={STATUS_TONE[tag.status]} size="sm">
-                    {STATUS_LABEL[tag.status]}
+                  <Badge tone={STATUS_TONE[tag.status] ?? "neutral"} size="sm">
+                    {STATUS_LABEL[tag.status] ?? tag.status}
                   </Badge>
                   {eq && (
                     <Link

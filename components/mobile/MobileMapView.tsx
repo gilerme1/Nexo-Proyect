@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { LocationMap } from "@/components/widgets/LocationMap";
 import type { Client, Location, Equipment } from "@/lib/types";
@@ -13,15 +14,33 @@ interface Props {
 export function MobileMapView({ clients, locations, equipment }: Props) {
   const router = useRouter();
 
-  const points = locations
-    .filter((l) => l.latitude && l.longitude)
-    .map((l) => ({
-      id: l.id,
-      name: l.name,
-      latitude: l.latitude!,
-      longitude: l.longitude!,
-      status: l.status,
-    }));
+  const points = useMemo(
+    () =>
+      locations
+        .filter((l) => l.latitude && l.longitude)
+        .map((l) => ({
+          id: l.id,
+          name: l.name,
+          latitude: l.latitude!,
+          longitude: l.longitude!,
+          status: l.status,
+        })),
+    [locations],
+  );
+  const firstLocationByClient = useMemo(() => {
+    const indexed = new Map<string, Location>();
+    for (const location of locations) {
+      if (!indexed.has(location.clientId)) indexed.set(location.clientId, location);
+    }
+    return indexed;
+  }, [locations]);
+  const equipmentCountByClient = useMemo(() => {
+    const indexed = new Map<string, number>();
+    for (const item of equipment) {
+      indexed.set(item.clientId, (indexed.get(item.clientId) ?? 0) + 1);
+    }
+    return indexed;
+  }, [equipment]);
 
   return (
     <div className="space-y-4">
@@ -41,8 +60,8 @@ export function MobileMapView({ clients, locations, equipment }: Props) {
           </p>
         ) : (
           clients.map((client) => {
-            const firstLocation = locations.find((l) => l.clientId === client.id);
-            const eqCount = equipment.filter((e) => e.clientId === client.id).length;
+            const firstLocation = firstLocationByClient.get(client.id);
+            const eqCount = equipmentCountByClient.get(client.id) ?? 0;
             return (
               <button
                 key={client.id}

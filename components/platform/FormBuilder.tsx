@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { saveTemplateVersion } from "@/lib/actions/templates";
 import { cn } from "@/lib/utils/cn";
 import type {
@@ -666,10 +667,18 @@ function PreviewField({ field }: { field: EditorField }) {
       />
     );
   }
+  if (field.type === "date") {
+    return (
+      <div className="opacity-60 pointer-events-none">
+        <DatePicker value="" onChange={() => {}} placeholder={field.placeholder || "Seleccionar fecha"} />
+      </div>
+    );
+  }
+
   return (
     <input
       disabled
-      type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
+      type={field.type === "number" ? "number" : "text"}
       placeholder={field.placeholder || ""}
       className={cn(base, "cursor-not-allowed opacity-60")}
     />

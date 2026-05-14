@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Modal } from "@/components/ui/Modal";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { createScheduledMaintenance } from "@/lib/actions/reports";
 import type { Equipment, Client, Location } from "@/lib/types";
 
@@ -30,6 +31,7 @@ export function NewMaintenanceForm({ equipment, clients, locations }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [equipmentId, setEquipmentId] = useState("");
+  const [nextDueAt, setNextDueAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -95,7 +97,8 @@ export function NewMaintenanceForm({ equipment, clients, locations }: Props) {
             </div>
             <div>
               <label className="block text-2xs font-medium text-[var(--text-secondary)] mb-1.5">Próxima fecha *</label>
-              <Input name="nextDueAt" type="date" required />
+              <DatePicker value={nextDueAt} onChange={setNextDueAt} placeholder="Seleccionar fecha" />
+              <input type="hidden" name="nextDueAt" value={nextDueAt} />
             </div>
           </div>
           <div>

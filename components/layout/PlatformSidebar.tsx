@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { SidebarShell } from "./SidebarShell";
 import { SidebarItem, SidebarSection } from "./SidebarItem";
-import { SidebarCollapseToggle } from "./SidebarCollapseToggle";
 import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 import type { Tenant } from "@/lib/types";
 
@@ -49,7 +48,7 @@ export function PlatformSidebar({ tenants }: Props) {
 
   return (
     <SidebarShell>
-      <WorkspaceSwitcher current={{ kind: "platform" }} tenants={tenants} />
+      <WorkspaceSwitcher current={{ kind: "platform" }} tenants={tenants} isPlatformAdmin />
 
       <nav className="flex-1 overflow-y-auto mt-4 -mx-1 px-1">
         <SidebarSection title="Operación" />
@@ -81,7 +80,6 @@ export function PlatformSidebar({ tenants }: Props) {
         </ul>
       </nav>
 
-      <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]" />
     </SidebarShell>
   );
 }

@@ -11,11 +11,13 @@ import type { Tenant } from "@/lib/types";
 interface WorkspaceSwitcherProps {
   current: { kind: "platform" } | { kind: "tenant"; tenant: Tenant };
   tenants: Tenant[];
+  isPlatformAdmin?: boolean;
 }
 
 export function WorkspaceSwitcher({
   current,
   tenants,
+  isPlatformAdmin = false,
 }: WorkspaceSwitcherProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -38,7 +40,7 @@ export function WorkspaceSwitcher({
 
   const triggerInner = (
     <button
-      onClick={() => setOpen(!open)}
+      onClick={() => isPlatformAdmin && setOpen(!open)}
       className={cn(
         "flex items-center gap-2.5 rounded-2xl",
         "bg-[var(--bg-card)] border border-[var(--border-subtle)]",
@@ -73,7 +75,7 @@ export function WorkspaceSwitcher({
               {sublabel}
             </p>
           </div>
-          <ChevronsUpDown className="h-3.5 w-3.5 text-[var(--text-tertiary)] shrink-0" />
+          {isPlatformAdmin && <ChevronsUpDown className="h-3.5 w-3.5 text-[var(--text-tertiary)] shrink-0" />}
         </>
       )}
     </button>
@@ -89,7 +91,7 @@ export function WorkspaceSwitcher({
         triggerInner
       )}
 
-      {open && (
+      {isPlatformAdmin && open && (
         <div
           className={cn(
             "absolute z-50",

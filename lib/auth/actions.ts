@@ -97,11 +97,14 @@ export async function switchToTenant(formData: FormData) {
   let base: Partial<Session> = {};
   try { base = JSON.parse(raw ?? "{}"); } catch {}
 
+  // Only platform_admin can switch into a tenant workspace
+  if (base.role !== "platform_admin") redirect("/app");
+
   const session: Session = {
     userId: base.userId ?? "user_admin",
     isLoggedIn: true,
     workspace: { kind: "tenant", tenantId },
-    role: "tenant_admin",
+    role: "platform_admin",
   };
   jar.set(SESSION_COOKIE, JSON.stringify(session), { path: "/", maxAge: ONE_YEAR, httpOnly: true, sameSite: "lax" });
   redirect("/app");

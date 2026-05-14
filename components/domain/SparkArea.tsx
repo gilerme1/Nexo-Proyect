@@ -3,6 +3,8 @@
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils/cn";
 
+const ES_UY_NUMBER_FORMAT = new Intl.NumberFormat("es-UY");
+
 // ============================================================================
 // SparkArea — line chart with gradient fill + interactive hover
 // ============================================================================
@@ -41,9 +43,8 @@ export function SparkArea({
 
   if (data.length < 2) return null;
 
-  // Local formatter — kept inside the client component so no function crosses the boundary
   const formatValue = (v: number) => {
-    const formatted = new Intl.NumberFormat("es-UY").format(v);
+    const formatted = ES_UY_NUMBER_FORMAT.format(v);
     return `${valuePrefix}${formatted}${valueSuffix}`;
   };
 
@@ -229,7 +230,7 @@ export function SparkBars({
   const activeIdx = hoverIdx ?? highlightIndex;
 
   const formatValue = (v: number) =>
-    `${valuePrefix}${new Intl.NumberFormat("es-UY").format(v)}${valueSuffix}`;
+    `${valuePrefix}${ES_UY_NUMBER_FORMAT.format(v)}${valueSuffix}`;
 
   return (
     <div className={cn("w-full", className)}>

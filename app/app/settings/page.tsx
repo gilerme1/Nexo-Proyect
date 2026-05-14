@@ -1,10 +1,23 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth/get-session";
-import { ComingSoon } from "@/components/ui/ComingSoon";
+import { requireSession } from "@/lib/auth/get-session";
+import { store } from "@/lib/data/store";
+import { SettingsClient } from "@/components/tenant/SettingsClient";
 
 export default async function SettingsPage() {
-  const session = await getSession();
+  const session = await requireSession();
   if (session.workspace.kind !== "tenant") redirect("/");
-  if (session.role !== "tenant_admin") redirect("/app");
-  return <ComingSoon title="Configuración" description="Configuración del tenant." delivery="Entrega 4" />;
+  if (session.role !== "tenant_admin" && session.role !== "platform_admin") redirect("/app");
+
+  const { tenantId } = session.workspace;
+  const tenant = store.tenants.find((t) => t.id === tenantId);
+  if (!tenant) redirect("/app");
+
+  return (
+    <SettingsClient
+      tenantId={tenant.id}
+      name={tenant.name}
+      legalName={tenant.legalName}
+      branding={tenant.branding}
+    />
+  );
 }

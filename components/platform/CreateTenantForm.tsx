@@ -51,7 +51,7 @@ export function CreateTenantForm({ verticals, plans }: Props) {
         description="Creá la empresa, asigná los rubros que opera y elegí su plan inicial."
       />
 
-      <form action={handleSubmit} className="space-y-6 max-w-3xl">
+      <form action={handleSubmit} className="space-y-6">
         <Card>
           <CardBody className="space-y-5">
             <div>

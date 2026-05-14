@@ -55,7 +55,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          "inline-flex items-center justify-center font-medium",
+          "group inline-flex items-center justify-center font-medium",
           "disabled:opacity-50 disabled:cursor-not-allowed",
           pill ? "rounded-full" : "rounded-lg",
           variants[variant],
@@ -66,11 +66,17 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          leftIcon
-        )}
+        ) : leftIcon ? (
+          <span className="inline-flex group-hover:-translate-y-0.5 transition-transform duration-150">
+            {leftIcon}
+          </span>
+        ) : null}
         {children}
-        {rightIcon}
+        {rightIcon ? (
+          <span className="inline-flex group-hover:translate-x-0.5 transition-transform duration-150">
+            {rightIcon}
+          </span>
+        ) : null}
       </button>
     );
   },

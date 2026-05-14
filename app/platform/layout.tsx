@@ -31,7 +31,7 @@ export default async function PlatformLayout({
             scopeLabel="Platform"
             user={{ name: user.name, email: user.email }}
           />
-          <main className="flex-1 px-4 md:px-6 py-6 max-w-screen-2xl w-full">
+          <main className="flex-1 px-4 md:px-6 py-6">
             {children}
           </main>
         </div>

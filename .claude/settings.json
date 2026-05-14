@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(open \"http://localhost:3005/app\")",
+      "Bash(xargs ls)",
+      "Bash(lsof -ti:3000,3005)",
+      "Bash(xargs kill -9)",
+      "Bash(npm run *)",
+      "Bash(open \"http://localhost:3000/app\")",
+      "Bash(curl -s http://localhost:3000/app)",
+      "Bash(lsof -ti:3000)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(chmod +x /Users/andresartemov/Documents/GitHub/Nexo-Proyect/iniciar.command)",
+      "Bash(open /Users/andresartemov/Documents/GitHub/Nexo-Proyect/iniciar.command)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/app/equipment/eq_norte_1)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  }
+}

@@ -32,22 +32,28 @@ const RIGHT_TABS = [
 export function MobileBottomNav({ user: _user }: MobileBottomNavProps) {
   const pathname = usePathname();
   const [scanOpen, setScanOpen] = useState(false);
-
   const activeTab = ROUTE_MAP.find(({ pattern }) => pattern?.test(pathname))?.tab ?? null;
 
   return (
     <>
+      {/* lg:hidden via CSS — never affected by JS hydration timing */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-[var(--bg-canvas)] border-t border-[var(--border-subtle)]"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 9999,
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+        className="lg:hidden bg-[var(--bg-canvas)] border-t border-[var(--border-subtle)]"
       >
         <div className="flex h-16 items-end pb-2">
-          {/* Tabs 1–2 */}
           {LEFT_TABS.map(({ id, label, icon: Icon, href }) => {
             const active = activeTab === id;
             return (
-              <Link key={id} href={href} className="flex flex-1 flex-col items-center gap-1">
-                <Icon className={cn("h-5 w-5", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")} />
+              <Link key={id} href={href} className="group flex flex-1 flex-col items-center gap-1 active:opacity-60 transition-opacity duration-100">
+                <Icon className={cn("h-5 w-5 group-hover:scale-110 transition-transform duration-150", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")} />
                 <span className={cn("text-[10px] font-medium", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")}>
                   {label}
                 </span>
@@ -55,24 +61,23 @@ export function MobileBottomNav({ user: _user }: MobileBottomNavProps) {
             );
           })}
 
-          {/* Tab 3 — Scanner (central, elevated) */}
+          {/* Central scan button */}
           <div className="flex flex-1 justify-center">
             <button
               type="button"
               onClick={() => setScanOpen(true)}
               aria-label="Escanear QR"
-              className="h-14 w-14 -mt-7 grid place-items-center rounded-full bg-[var(--accent-500)] text-white shadow-lg"
+              className="group h-14 w-14 -mt-7 grid place-items-center rounded-full bg-[var(--accent-500)] text-white shadow-lg cursor-pointer hover:brightness-110 active:scale-90 transition-all duration-150"
             >
-              <ScanLine className="h-6 w-6" />
+              <ScanLine className="h-6 w-6 group-hover:scale-110 transition-transform duration-150" />
             </button>
           </div>
 
-          {/* Tabs 4–5 */}
           {RIGHT_TABS.map(({ id, label, icon: Icon, href }) => {
             const active = activeTab === id;
             return (
-              <Link key={id} href={href} className="flex flex-1 flex-col items-center gap-1">
-                <Icon className={cn("h-5 w-5", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")} />
+              <Link key={id} href={href} className="group flex flex-1 flex-col items-center gap-1 active:opacity-60 transition-opacity duration-100">
+                <Icon className={cn("h-5 w-5 group-hover:scale-110 transition-transform duration-150", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")} />
                 <span className={cn("text-[10px] font-medium", active ? "text-[var(--accent-500)]" : "text-[var(--text-tertiary)]")}>
                   {label}
                 </span>

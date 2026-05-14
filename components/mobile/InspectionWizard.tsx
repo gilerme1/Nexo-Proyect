@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, ArrowLeft, QrCode, ClipboardList } from "lucide-react";
 import { LocationMap } from "@/components/widgets/LocationMap";
@@ -25,17 +25,43 @@ export function InspectionWizard({ locations, equipment, onClose }: InspectionWi
   const [equipmentId, setEquipmentId] = useState<string | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
 
-  const selectedLocation = locations.find((l) => l.id === locationId);
-  const selectedEquipment = equipment.find((e) => e.id === equipmentId);
-  const locationEquipment = equipment.filter((e) => e.locationId === locationId);
+  const locationsById = useMemo(
+    () => new Map(locations.map((location) => [location.id, location])),
+    [locations],
+  );
+  const equipmentById = useMemo(
+    () => new Map(equipment.map((item) => [item.id, item])),
+    [equipment],
+  );
+  const equipmentByLocation = useMemo(() => {
+    const index = new Map<string, Equipment[]>();
+    for (const item of equipment) {
+      if (!item.locationId) continue;
+      const list = index.get(item.locationId);
+      if (list) {
+        list.push(item);
+      } else {
+        index.set(item.locationId, [item]);
+      }
+    }
+    return index;
+  }, [equipment]);
 
-  const mapPoints = locations.map((l) => ({
-    id: l.id,
-    name: l.name,
-    latitude: l.latitude,
-    longitude: l.longitude,
-    status: l.status,
-  }));
+  const selectedLocation = locationId ? locationsById.get(locationId) : undefined;
+  const selectedEquipment = equipmentId ? equipmentById.get(equipmentId) : undefined;
+  const locationEquipment = locationId ? (equipmentByLocation.get(locationId) ?? []) : [];
+
+  const mapPoints = useMemo(
+    () =>
+      locations.map((l) => ({
+        id: l.id,
+        name: l.name,
+        latitude: l.latitude,
+        longitude: l.longitude,
+        status: l.status,
+      })),
+    [locations],
+  );
 
   return (
     <div className="fixed inset-0 z-[60] bg-[var(--bg-app)] flex flex-col">
@@ -59,7 +85,7 @@ export function InspectionWizard({ locations, equipment, onClose }: InspectionWi
 
             <div className="divide-y divide-[var(--border-subtle)]">
               {locations.map((loc) => {
-                const eqCount = equipment.filter((e) => e.locationId === loc.id).length;
+                const eqCount = equipmentByLocation.get(loc.id)?.length ?? 0;
                 return (
                   <button
                     key={loc.id}
