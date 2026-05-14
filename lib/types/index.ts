@@ -22,6 +22,8 @@ export interface User {
   name: string;
   avatarUrl?: string;
   isPlatformAdmin: boolean;
+  /** Plaintext for demo — replace with bcrypt hash in production */
+  password?: string;
   createdAt: ISODate;
 }
 

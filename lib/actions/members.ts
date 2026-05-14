@@ -34,6 +34,9 @@ export async function inviteMember(
 
   const now = new Date().toISOString();
 
+  const password = String(formData.get("password") ?? "").trim();
+  if (!password) return { ok: false, error: "La contraseña es obligatoria." };
+
   let user = store.users.find((u) => u.email.toLowerCase() === email);
   if (!user) {
     const newUser: User = {
@@ -41,10 +44,14 @@ export async function inviteMember(
       name: name || email,
       email,
       isPlatformAdmin: false,
+      password,
       createdAt: now,
     };
     store.users.push(newUser);
     user = newUser;
+  } else {
+    // Update password for existing user being re-invited
+    user.password = password;
   }
 
   const existing = store.memberships.find(
@@ -107,8 +114,42 @@ export async function updateMember(
   if (user) {
     if (name)  user.name  = name;
     if (email) user.email = email;
+    const password = String(formData.get("password") ?? "").trim();
+    if (password) user.password = password;
   }
 
+  revalidatePath("/app/users");
+  revalidatePath(`/app/users/${membership.userId}`);
+  return { ok: true };
+}
+
+export async function updateUserProfile(
+  formData: FormData,
+): Promise<{ ok: boolean; error?: string }> {
+  await guardAdmin();
+
+  const userId   = String(formData.get("userId")  ?? "");
+  const name     = String(formData.get("name")    ?? "").trim();
+  const email    = String(formData.get("email")   ?? "").trim().toLowerCase();
+  const role     = String(formData.get("role")    ?? "") as TenantRole;
+  const password = String(formData.get("password") ?? "").trim();
+  const tenantId = String(formData.get("tenantId") ?? "");
+
+  const user = store.users.find((u) => u.id === userId);
+  if (!user) return { ok: false, error: "Usuario no encontrado." };
+
+  if (name)     user.name     = name;
+  if (email)    user.email    = email;
+  if (password) user.password = password;
+
+  if (role && tenantId) {
+    const membership = store.memberships.find(
+      (m) => m.userId === userId && m.tenantId === tenantId && m.active,
+    );
+    if (membership) membership.role = role;
+  }
+
+  revalidatePath(`/app/users/${userId}`);
   revalidatePath("/app/users");
   return { ok: true };
 }

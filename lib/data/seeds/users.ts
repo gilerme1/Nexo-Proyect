@@ -6,6 +6,7 @@ export const mockUsers: User[] = [
     email: "andres@maintly.app",
     name: "Andrés Artemov",
     isPlatformAdmin: true,
+    password: "admin1234",
     createdAt: "2026-01-10T10:00:00Z",
   },
   {
@@ -13,6 +14,7 @@ export const mockUsers: User[] = [
     email: "carla@seguridadnorte.uy",
     name: "Carla Méndez",
     isPlatformAdmin: false,
+    password: "carla1234",
     createdAt: "2026-02-04T10:00:00Z",
   },
   {
@@ -20,6 +22,7 @@ export const mockUsers: User[] = [
     email: "diego@seguridadnorte.uy",
     name: "Diego Pereira",
     isPlatformAdmin: false,
+    password: "diego1234",
     createdAt: "2026-02-06T10:00:00Z",
   },
   {
@@ -27,6 +30,7 @@ export const mockUsers: User[] = [
     email: "ines@climavision.uy",
     name: "Inés Rodríguez",
     isPlatformAdmin: false,
+    password: "ines1234",
     createdAt: "2026-02-15T10:00:00Z",
   },
   {
@@ -34,6 +38,7 @@ export const mockUsers: User[] = [
     email: "matias@climavision.uy",
     name: "Matías Suárez",
     isPlatformAdmin: false,
+    password: "matias1234",
     createdAt: "2026-02-20T10:00:00Z",
   },
   {
@@ -41,6 +46,7 @@ export const mockUsers: User[] = [
     email: "rodrigo@elevatec.uy",
     name: "Rodrigo Castro",
     isPlatformAdmin: false,
+    password: "rodrigo1234",
     createdAt: "2026-03-02T10:00:00Z",
   },
 ];

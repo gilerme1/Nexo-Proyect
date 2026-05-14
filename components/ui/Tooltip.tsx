@@ -37,7 +37,7 @@ export function Tooltip({
           align={align}
           sideOffset={6}
           className={cn(
-            "z-[60] px-2.5 py-1.5 rounded-lg text-2xs font-medium",
+            "z-40 px-2.5 py-1.5 rounded-lg text-2xs font-medium",
             "bg-[var(--bg-card-elevated)] text-[var(--text-primary)]",
             "border border-[var(--border-default)]",
             "shadow-[var(--shadow-elevated)]",

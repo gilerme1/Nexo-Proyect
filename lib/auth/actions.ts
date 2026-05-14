@@ -19,11 +19,14 @@ export async function login(formData: FormData): Promise<{ error?: string }> {
     return { error: "Completá email y contraseña." };
   }
 
-  // Demo auth: accept any user in the store
-  // In E5 this becomes: supabase.auth.signInWithPassword({ email, password })
   const user = store.users.find((u) => u.email.toLowerCase() === email);
 
   if (!user) {
+    return { error: "Email o contraseña incorrectos." };
+  }
+
+  // Validate password — users without a password set cannot log in
+  if (!user.password || user.password !== password) {
     return { error: "Email o contraseña incorrectos." };
   }
 
