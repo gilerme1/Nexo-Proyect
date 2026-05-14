@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Camera, X, Plus, Trash2,
-  ClipboardList, Wrench, CheckSquare, Loader2,
+  ClipboardList, CheckSquare, Loader2,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -43,9 +43,16 @@ export function NewReportForm({ equipment, clients, locations, equipmentTypes, s
   const search = useSearchParams();
   const presetEquipmentId = search.get("equipmentId") ?? "";
   const presetScheduledId = search.get("scheduledId") ?? "";
+  const fromEquipment = !!presetEquipmentId;
 
   const [equipmentId, setEquipmentId] = useState(presetEquipmentId);
-  const [checklists, setChecklists] = useState<ReportChecklist[]>([]);
+  const [checklists, setChecklists] = useState<ReportChecklist[]>(() => {
+    if (!presetEquipmentId) return [];
+    const eq = equipment.find((e) => e.id === presetEquipmentId);
+    if (!eq) return [];
+    const eqType = equipmentTypes.find((t) => t.id === eq.equipmentTypeId);
+    return buildInitialChecklists(eqType?.slug ?? "");
+  });
   const [photos, setPhotos] = useState<PhotoPreview[]>([]);
   const [signature, setSignature] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -202,9 +209,12 @@ export function NewReportForm({ equipment, clients, locations, equipmentTypes, s
 
   return (
     <div className="space-y-6">
-      <Link href="/app/reports" className="inline-flex items-center gap-1.5 text-2xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+      <Link
+        href={fromEquipment ? `/app/equipment/${presetEquipmentId}` : "/app/reports"}
+        className="inline-flex items-center gap-1.5 text-2xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+      >
         <ArrowLeft className="h-3 w-3" />
-        Volver a reportes
+        {fromEquipment ? "Volver al equipo" : "Volver a reportes"}
       </Link>
 
       <PageHeader
@@ -222,36 +232,64 @@ export function NewReportForm({ equipment, clients, locations, equipmentTypes, s
             </h2>
           </div>
           <CardBody className="space-y-4">
-            <div>
-              <label className="block text-2xs font-medium text-[var(--text-secondary)] mb-1.5">Equipo *</label>
-              <Select value={equipmentId} onChange={(e) => handleEquipmentChange(e.target.value)} required>
-                <option value="">Seleccioná el equipo…</option>
-                {equipment.map((eq) => {
-                  const c = clients.find((c) => c.id === eq.clientId);
-                  return (
-                    <option key={eq.id} value={eq.id}>
-                      {eq.name} — {c?.name ?? "—"} ({eq.internalCode})
-                    </option>
-                  );
-                })}
-              </Select>
-            </div>
-
-            {/* Equipment summary card */}
-            {selectedEq && (
-              <div className="bg-[var(--bg-hover)] rounded-xl px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-2xs">
-                {[
-                  ["Tipo", eqType?.name],
-                  ["Cliente", client?.name],
-                  ["Ubicación", loc?.name],
-                  ["Código", selectedEq.internalCode],
-                ].map(([k, v]) => v && (
-                  <div key={k}>
-                    <span className="text-[var(--text-tertiary)]">{k}: </span>
-                    <span className="text-[var(--text-primary)] font-medium">{v}</span>
-                  </div>
-                ))}
+            {fromEquipment && selectedEq ? (
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-hover)] px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-[var(--text-primary)]">{selectedEq.name}</p>
+                  <Link
+                    href={`/app/equipment/${selectedEq.id}`}
+                    className="text-2xs text-[var(--accent-400)] hover:underline"
+                  >
+                    Ver equipo
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-2xs">
+                  {[
+                    ["Tipo", eqType?.name],
+                    ["Cliente", client?.name],
+                    ["Ubicación", loc?.name],
+                    ["Código", selectedEq.internalCode],
+                  ].map(([k, v]) => v && (
+                    <div key={k}>
+                      <span className="text-[var(--text-tertiary)]">{k}: </span>
+                      <span className="text-[var(--text-primary)] font-medium">{v}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-2xs font-medium text-[var(--text-secondary)] mb-1.5">Equipo *</label>
+                  <Select value={equipmentId} onChange={(e) => handleEquipmentChange(e.target.value)} required>
+                    <option value="">Seleccioná el equipo…</option>
+                    {equipment.map((eq) => {
+                      const c = clients.find((c) => c.id === eq.clientId);
+                      return (
+                        <option key={eq.id} value={eq.id}>
+                          {eq.name} — {c?.name ?? "—"} ({eq.internalCode})
+                        </option>
+                      );
+                    })}
+                  </Select>
+                </div>
+
+                {selectedEq && (
+                  <div className="bg-[var(--bg-hover)] rounded-xl px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-2xs">
+                    {[
+                      ["Tipo", eqType?.name],
+                      ["Cliente", client?.name],
+                      ["Ubicación", loc?.name],
+                      ["Código", selectedEq.internalCode],
+                    ].map(([k, v]) => v && (
+                      <div key={k}>
+                        <span className="text-[var(--text-tertiary)]">{k}: </span>
+                        <span className="text-[var(--text-primary)] font-medium">{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="grid grid-cols-2 gap-4">
