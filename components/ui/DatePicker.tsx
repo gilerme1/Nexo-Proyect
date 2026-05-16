@@ -33,6 +33,8 @@ export function DatePicker({
     return new Date();
   });
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [popoverAlign, setPopoverAlign] = useState<"left" | "right">("left");
 
   const selected = value && isValid(parseISO(value)) ? parseISO(value) : null;
   const heights = inputSize === "sm" ? "h-8 text-xs" : "h-10 text-sm";
@@ -70,8 +72,18 @@ export function DatePicker({
     <div ref={ref} className={cn("relative", className)}>
       {/* Trigger */}
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open && triggerRef.current) {
+            const rect = triggerRef.current.getBoundingClientRect();
+            const calendarWidth = 360;
+            setPopoverAlign(
+              rect.left + calendarWidth > window.innerWidth ? "right" : "left",
+            );
+          }
+          setOpen((v) => !v);
+        }}
         className={cn(
           "w-full flex items-center gap-2.5 rounded-full outline-none",
           "bg-[var(--bg-input)] border border-[var(--border-default)]",
@@ -111,7 +123,13 @@ export function DatePicker({
 
       {/* Calendar popover */}
       {open && (
-        <div className="absolute top-full left-0 mt-2 z-[200] w-[360px] bg-[var(--bg-card-elevated)] border border-[var(--border-default)] rounded-2xl shadow-[var(--shadow-elevated)] p-5">
+        <div
+          className={cn(
+            "absolute top-full mt-2 z-[200] w-[360px]",
+            "bg-[var(--bg-card-elevated)] border border-[var(--border-default)] rounded-2xl shadow-[var(--shadow-elevated)] p-5",
+            popoverAlign === "right" ? "right-0" : "left-0",
+          )}
+        >
           {/* Month navigation */}
           <div className="flex items-center justify-between mb-3">
             <button
