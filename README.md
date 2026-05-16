@@ -171,13 +171,14 @@ La autenticación es demo — cualquier contraseña funciona con estos emails.
 - [x] Dark/light mode
 - [x] Loading skeletons en rutas lentas
 - [x] Filtrado de nav por rol
+- [ ] Export PDF de reportes
 
 ### Próximos pasos
 - [ ] Supabase: reemplazar store.ts por PostgreSQL real
 - [ ] Auth real (Supabase Auth o NextAuth)
 - [ ] Persistencia de datos
 - [ ] Push notifications (mantenimientos vencidos)
-- [ ] Export PDF de reportes
+
 - [ ] Separación NestJS + React cuando escale
 
 ---
